@@ -41,8 +41,8 @@ export default function BooksPage() {
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
         <input
           type="text"
-          placeholder="Search by title or author..."
-          className="p-2 rounded border border-gray-700 bg-gray-800"
+          placeholder="🔍 Search by title or author..."
+          className="w-64 p-2 rounded border border-gray-700 bg-gray-800"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

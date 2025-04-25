@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useTheme } from "@/lib/ThemeContext"
 
 export default function Header() {
-    const pathname = usePathname();
+    const pathname = usePathname()
     const { theme, toggleTheme } = useTheme()
 
     return (
@@ -29,6 +29,16 @@ export default function Header() {
                     >
                         Books
                     </Link>
+                    <Link
+                        href="/qanda"
+                        className={`px-3 py-1 rounded-md transition-colors ${
+                            pathname.startsWith("/qanda")
+                                ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                        }`}
+                    >
+                        Q&A
+                    </Link>
                 </div>
 
                 <div className="ml-auto flex items-center space-x-4">
@@ -44,9 +54,10 @@ export default function Header() {
                         {theme === "dark" ? (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-yellow-300"
+                                className="h-5 w-5 text-yellow-500"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
+                                style={{ color: "#FFD700" }}
                             >
                                 <path
                                     fillRule="evenodd"
@@ -57,9 +68,10 @@ export default function Header() {
                         ) : (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-indigo-400"
+                                className="h-5 w-5"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
+                                style={{ color: "#FF00FF" }}
                             >
                                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                             </svg>

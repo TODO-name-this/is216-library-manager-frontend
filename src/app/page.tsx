@@ -44,7 +44,7 @@ export default function HomePage() {
       {/* Bottom CTA Button */}
       <Link
         href="/books"
-        className="animate-bounce bg-blue-500 hover:bg-blue-600 transition-colors text-white px-8 py-4 rounded-lg text-xl font-semibold shadow-lg mt-8"
+        className="animate-bounce bg-blue-500 hover:bg-blue-600 transition-colors text-white px-8 py-4 rounded-lg text-xl font-semibold shadow-lg mt-8 ensure-white-text"
       >
         Explore Our Collection →
       </Link>

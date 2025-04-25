@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
 :root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card-bg: #1f1f1f;
+  --border-color: #2a2a2a;
+  --hover-color: #333333;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+}
+
+html.light-mode {
   --background: #ffffff;
   --foreground: #171717;
+  --card-bg: #f9f9f9;
+  --border-color: #e5e5e5;
+  --hover-color: #f0f0f0;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
 }
 
 @theme inline {
@@ -12,15 +27,134 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure button text and icons remain white in both themes (personal preferences) */
+button:not(.no-white-text) {
+  color: white !important;
+}
+
+button:not(.no-white-text) svg {
+  color: white !important;
+}
+
+/* Ensure button text and icons remain white in both themes (personal preferences) */
+.btn-primary, 
+.btn-action, 
+.btn-submit,
+.btn-reserve,
+.btn-load-more,
+.pagination-btn,
+button[type="submit"] {
+  color: white !important;
+}
+
+.btn-primary svg, 
+.btn-action svg, 
+.btn-submit svg,
+.btn-reserve svg,
+.btn-load-more svg,
+.pagination-btn svg,
+button[type="submit"] svg {
+  color: white !important;
+}
+
+/* Page navigation buttons (">", ">>", etc) */
+.page-nav-btn {
+  color: white !important;
+}
+
+.page-nav-btn svg {
+  color: white !important;
+}
+
+html.light-mode .bg-gray-900 {
+  background-color: #ffffff;
+}
+
+html.light-mode .border-gray-700 {
+  border-color: #e5e5e5;
+}
+
+html.light-mode .text-white {
+  color: #171717;
+}
+
+/* Add exception for buttons - their text should remain white even in light mode */
+html.light-mode button:not(.no-white-text) .text-white,
+html.light-mode .btn-primary .text-white,
+html.light-mode .btn-action .text-white,
+html.light-mode .btn-submit .text-white,
+html.light-mode .page-nav-btn .text-white {
+  color: white !important;
+}
+
+/* Special class to ensure text remains white in light mode */
+html.light-mode .ensure-white-text,
+html.light-mode .ensure-white-text * {
+  color: white !important;
+}
+
+/* Special handling for "Reserve" button and "Xem chi tiết" link */
+html.light-mode a.rounded.bg-blue-500,
+html.light-mode a.inline-flex.items-center.justify-center.gap-2.rounded-lg.bg-gradient-to-r {
+  color: white !important;
+}
+
+html.light-mode a.inline-flex.items-center.justify-center.gap-2 svg {
+  color: white !important;
+}
+
+html.light-mode .text-gray-300 {
+  color: #4b5563;
+}
+
+html.light-mode .hover\:bg-gray-800:hover {
+  background-color: #f3f4f6;
+}
+
+html.light-mode .hover\:text-white:hover {
+  color: #000000;
+}
+
+/* Keep button text white on hover */
+html.light-mode button:not(.no-white-text):hover,
+html.light-mode .btn-primary:hover,
+html.light-mode .btn-action:hover,
+html.light-mode .btn-submit:hover,
+html.light-mode .page-nav-btn:hover {
+  color: white !important;
+}
+
+html.light-mode .bg-gray-700 {
+  background-color: #e5e7eb;
+}
+
+/* Apply light mode to book cards */
+html.light-mode .group {
+  background-color: #ffffff;
+  border-color: #e5e5e5;
+}
+
+html.light-mode .group:hover {
+  border-color: #3b82f6;
+}
+
+html.light-mode .from-blue-400 {
+  --tw-gradient-from: #3b82f6;
+}
+
+html.light-mode .to-blue-600 {
+  --tw-gradient-to: #2563eb;
+}
+
+/* Book details page */
+html.light-mode .bg-gray-900,
+html.light-mode .bg-gray-800 {
+  background-color: #ffffff;
 }

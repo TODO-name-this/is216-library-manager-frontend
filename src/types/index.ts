@@ -49,3 +49,20 @@ export interface Category {
     name: string
     description: string
 }
+
+export interface Question {
+    id: string
+    question: string
+    askedBy: string
+    askedDate: string
+    answer?: string
+    answeredBy?: string
+    answeredDate?: string
+}
+
+export interface Comment {
+    user: string
+    date: string
+    rating: number
+    text: string
+}

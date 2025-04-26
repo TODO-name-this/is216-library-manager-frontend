@@ -9,6 +9,7 @@ export const mockAuthors = [
       twitter: "https://twitter.com/unclebobmartin",
       website: "https://cleancoder.com",
     },
+    birthDate: "1952-12-05",
     books: ["1", "2"],
   },
   {
@@ -17,6 +18,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=James+O.+Copilen&background=FF5733&color=fff",
     bio: "James O. Copilen is a technical writer and contributor in the field of software engineering.",
+    birthDate: "1960-01-01",
     books: ["1"],
   },
   {
@@ -30,6 +32,7 @@ export const mockAuthors = [
       website: "https://getify.me",
       github: "https://github.com/getify",
     },
+    birthDate: "1975-05-12",
     books: ["2"],
   },
   {
@@ -38,6 +41,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Biggus+Dickus&background=9C27B0&color=fff",
     bio: "Biggus Dickus is known for his humorous and bold commentary on technical debt.",
+    birthDate: "1970-07-07",
     books: ["4"],
   },
   {
@@ -46,6 +50,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Hugh+Jass&background=3F51B5&color=fff",
     bio: "Hugh Jass is a witty speaker on software regrets and legacy code.",
+    birthDate: "1968-03-15",
     books: ["4"],
   },
   {
@@ -54,6 +59,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Douchlas+Crockford&background=E91E63&color=fff",
     bio: "Douchlas Crockford brings a critical eye to JavaScript, famously known in a certain book title.",
+    birthDate: "1962-09-10",
     books: ["5"],
   },
   {
@@ -62,6 +68,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=NaN+McUndefined&background=009688&color=fff",
     bio: "NaN McUndefined provides a humorous perspective on the quirks of modern JavaScript.",
+    birthDate: "1980-10-10",
     books: ["5"],
   },
   {
@@ -70,6 +77,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Erich+Gamma+Ray&background=795548&color=fff",
     bio: "Erich Gamma Ray is a pioneer in design patterns and software architecture.",
+    birthDate: "1958-02-20",
     books: ["6"],
   },
   {
@@ -78,6 +86,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Richard+Helm&background=FF9800&color=fff",
     bio: "Richard Helm's Deep dives into complex software design patterns with precision.",
+    birthDate: "1960-04-15",
     books: ["6"],
   },
   {
@@ -86,6 +95,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Guido+van+Rossum&background=607D8B&color=fff",
     bio: "Guido van Rossum in the Streets is the creator of Python with a street-smart coding style.",
+    birthDate: "1956-01-31",
     books: ["7"],
   },
   {
@@ -94,6 +104,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Gayle+Laakmann+McDowell&background=0097A7&color=fff",
     bio: "Gayle Laakmann McDowell My Nerves is renowned for her expertise in coding interviews.",
+    birthDate: "1967-08-17",
     books: ["8"],
   },
   {
@@ -102,6 +113,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Fred+Brooks&background=F44336&color=fff",
     bio: "Fred Brooks Was Here authored seminal works on software engineering and project management.",
+    birthDate: "1931-04-19",
     books: ["9"],
   },
   {
@@ -110,6 +122,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Donald+Knuth&background=FF5722&color=fff",
     bio: "Donald Knuth My Balls is a legendary figure in computer science and algorithm design.",
+    birthDate: "1938-01-10",
     books: ["11"],
   },
   {
@@ -118,6 +131,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Gene+Kim&background=9C27B0&color=fff",
     bio: "Gene Kim Jong-un is a controversial figure in DevOps and system administration.",
+    birthDate: "1975-07-07",
     books: ["14", "15", "16"],
   },
   {
@@ -126,6 +140,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Josée+Lajoie&background=3F51B5&color=fff",
     bio: "Josée Lajoie's Memory Leak is a legend in C++ standard library development.",
+    birthDate: "1965-06-20",
     books: ["18"],
   },
   {
@@ -134,6 +149,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Kent+Beck&background=E91E63&color=fff",
     bio: "Kent Beck My Patience pioneered extreme programming and test-driven development.",
+    birthDate: "1961-03-16",
     books: ["19"],
   },
   {
@@ -142,6 +158,7 @@ export const mockAuthors = [
     imageUrl:
       "https://ui-avatars.com/api/?name=Michael+Feathers&background=009688&color=fff",
     bio: "Michael C. Feathers His Nest specializes in taming legacy code monsters.",
+    birthDate: "1962-02-10",
     books: ["20"],
   },
 ];

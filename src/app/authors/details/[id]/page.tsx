@@ -61,6 +61,12 @@ export default function AuthorDetailPage() {
           <h1 className="text-3xl font-bold text-white">
             {authorProfile.name}
           </h1>
+          {authorProfile.birthDate && (
+            <p className="mt-2 text-gray-400">
+              Date Of Birth:{" "}
+              {authorProfile.birthDate.split("-").reverse().join("-")}
+            </p>
+          )}
           <p className="mt-2 text-gray-300">{authorProfile.bio}</p>
           {authorProfile.socialLinks && (
             <div className="mt-2 flex flex-wrap items-center gap-4">

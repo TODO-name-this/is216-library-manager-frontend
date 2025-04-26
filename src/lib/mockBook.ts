@@ -10,11 +10,11 @@ export const mockBooks = [
     ratingCount: 312,
     imageUrl:
       "https://miro.medium.com/v2/resize:fit:1103/1*PKsDuPxNoKJyJvmlLc64qg.jpeg",
-    authors: ["Robert C. Martin", "James O. Copilen"],
+    authors: ["A_1", "A_2"],
     categories: ["Software Engineering", "Best Practices"],
     comments: [
       {
-        user: "Bob",  
+        user: "Bob",
         date: "12/02/2024",
         rating: 4,
         text: "This book is as fantastic as debugging at 3am with no coffee.",
@@ -37,7 +37,7 @@ export const mockBooks = [
     rating: 4.7,
     ratingCount: 450,
     imageUrl: "https://images-na.ssl-images-amazon.com/images/I/81kqrwS1nNL.jpg",
-    authors: ["Kyle Simpson"],
+    authors: ["A_3", "A_1"],
     categories: ["JavaScript", "Programming"],
     comments: [
       {
@@ -91,37 +91,37 @@ export const mockBooks = [
     rating: 3.8,
     ratingCount: 69,
     imageUrl: "https://picsum.photos/200/300?grayscale&blur=2",
-    authors: ["Biggus Dickus", "Hugh Jass"],
+    authors: ["A_4", "A_5"],
     categories: ["Technical Debt", "Regret"],
     comments: [
       {
         user: "CodeMasturbator",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Đọc xong mới biết mình không phải developer mà là thợ copy-paste nghiện caffeine"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Đọc xong mới biết mình không phải developer mà là thợ copy-paste nghiện caffeine",
+      },
+    ],
   },
   {
     id: "5",
     title: "JavaScript: The Good Parts (And All The Shit We Forgot)",
     publisher: "Shitty Code Press",
-    publicationDate: "02/30/2020", 
+    publicationDate: "02/30/2020",
     isbn: "123-ASS-6969",
     status: "Burned",
     rating: 1.5,
     ratingCount: 999,
     imageUrl: "https://via.placeholder.com/200x300.png?text=Div+Not+Found",
-    authors: ["Douchlas Crockford", "NaN McUndefined"],
+    authors: ["A_6", "A_7"],
     categories: ["Denial", "Stockholm Syndrome"],
     comments: [
       {
         user: "ReactFanboy69",
-        date: "Unknown", 
-        rating: 0,     
-        text: "Sách hay đến nỗi vợ bỏ đi theo thằng DevOps"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Sách hay đến nỗi vợ bỏ đi theo thằng DevOps",
+      },
+    ],
   },
   {
     id: "6",
@@ -133,100 +133,100 @@ export const mockBooks = [
     rating: 4.2,
     ratingCount: 420,
     imageUrl: "https://picsum.photos/200/300?random=1",
-    authors: ["Erich Gamma Ray", "Richard Helm's Deep"],
+    authors: ["A_8", "A_9"],
     categories: ["Overengineering", "Job Security"],
     comments: [
       {
         user: "SeniorDev10x",
-        date: "Unknown", 
-        rating: 0,      
-        text: "Biến 5 dòng code thành 50 class - Thăng chức here we go!"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Biến 5 dòng code thành 50 class - Thăng chức here we go!",
+      },
+    ],
   },
   {
     id: "7",
     title: "Python Crash Course: How to Fail 1000 Projects",
     publisher: "No Starch Press F",
-    publicationDate: "13/13/2023", 
+    publicationDate: "13/13/2023",
     isbn: "1593279280LMAO",
     status: "Melted",
     rating: 2.4,
     ratingCount: 777,
     imageUrl: "https://picsum.photos/200/300?snake=1",
-    authors: ["Eric Matthes My Balls", "Guido van Rossum in the Streets"],
+    authors: ["A_9", "A_10"],
     categories: ["Tutorial Hell", "Imposter Syndrome"],
     comments: [
       {
         user: "ScriptKiddie",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Học xong vẫn không phân biệt được list với dictionary - 10/10 would fail again"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Học xong vẫn không phân biệt được list với dictionary - 10/10 would fail again",
+      },
+    ],
   },
   {
     id: "8",
     title: "Cracking the Coding Interview: 189 Ways to Get Rejected",
     publisher: "Leetcode Anonymous",
-    publicationDate: "01/01/1970", 
+    publicationDate: "01/01/1970",
     isbn: "9780984782857FML",
     status: "Used as Toilet Paper",
     rating: 4.0,
     ratingCount: 314,
     imageUrl: "https://picsum.photos/200/300?job=hunting",
-    authors: ["Gayle Laakmann McDowell My Nerves"],
+    authors: ["A_11"],
     categories: ["Anxiety", "Existential Crisis"],
     comments: [
       {
         user: "JoblessGrad",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Luyện xong 500 câu vẫn trượt phỏng vấn intern - Đẳng cấp fail khác biệt"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Luyện xong 500 câu vẫn trượt phỏng vấn intern - Đẳng cấp fail khác biệt",
+      },
+    ],
   },
   {
     id: "9",
     title: "The Mythical Man-Month: Essays on Software Engineering Bullshit",
     publisher: "Addison-Wesn't",
-    publicationDate: "04/31/1995", 
+    publicationDate: "04/31/1995",
     isbn: "0201835959WTF",
     status: "Out of Print",
     rating: 4.5,
     ratingCount: 666,
     imageUrl: "https://picsum.photos/200/300?management=1",
-    authors: ["Fred Brooks Was Here"],
+    authors: ["A_12"],
     categories: ["Management Fails", "Vintage Hype"],
     comments: [
       {
         user: "ScrumMasterFlash",
-        date: "Unknown", 
-        rating: 0,       
-        text: "9 women can't make a baby in 1 month - Nhưng sếp tao vẫn nghĩ được đấy!"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "9 women can't make a baby in 1 month - Nhưng sếp tao vẫn nghĩ được đấy!",
+      },
+    ],
   },
   {
     id: "10",
     title: "Don't Make Me Think: A Common Sense Approach to Web Usability",
     publisher: "New Assholes",
-    publicationDate: "02/29/2023", 
+    publicationDate: "02/29/2023",
     isbn: "0321965515ROFL",
     status: "In Ur Mom",
     rating: 4.7,
-    ratingCount: 80085, 
+    ratingCount: 80085,
     imageUrl: "https://picsum.photos/200/300?ui=sux",
-    authors: ["Steve Krug My Eyes"],
+    authors: ["A_10"],
     categories: ["UX Nightmares", "Client Stupidity"],
     comments: [
       {
         user: "FrontendFucker",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Đọc xong vẫn phải làm pop-up quảng cáo che 90% màn hình - Đời là thế đấy!"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Đọc xong vẫn phải làm pop-up quảng cáo che 90% màn hình - Đời là thế đấy!",
+      },
+    ],
   },
   {
     id: "11",
@@ -238,20 +238,21 @@ export const mockBooks = [
     rating: 4.9,
     ratingCount: 42,
     imageUrl: "https://picsum.photos/200/300?math=1",
-    authors: ["Donald Knuth My Balls"],
+    authors: ["A_13"],
     categories: ["Masochism", "Flexing 101"],
     comments: [
       {
         user: "CSMajorTryhard",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Mua để khoe mác - Đọc được 3 trang thì ngộ độc ký hiệu toán"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Mua để khoe mác - Đọc được 3 trang thì ngộ độc ký hiệu toán",
+      },
+    ],
   },
   {
     id: "12",
-    title: "Head First Design Patterns: A Brain-Friendly Guide to Overcomplicating Shit",
+    title:
+      "Head First Design Patterns: A Brain-Friendly Guide to Overcomplicating Shit",
     publisher: "O'Really? Media",
     publicationDate: "10/10/2010",
     isbn: "0596007124YOLO",
@@ -259,20 +260,21 @@ export const mockBooks = [
     rating: 4.1,
     ratingCount: 911,
     imageUrl: "https://picsum.photos/200/300?patterns=1",
-    authors: ["Eric Freeman's OnlyFans", "Bert Bates My Ass"],
+    authors: ["A_12"],
     categories: ["Overengineering", "OOP Fetish"],
     comments: [
       {
         user: "PatternWhore",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Giờ tôi có thể biến Hello World thành 15 lớp abstract factory - Triệu đô here I come!"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Giờ tôi có thể biến Hello World thành 15 lớp abstract factory - Triệu đô here I come!",
+      },
+    ],
   },
   {
     id: "13",
-    title: "Code Complete: A Practical Handbook of Software Construction (Circa 1993)",
+    title:
+      "Code Complete: A Practical Handbook of Software Construction (Circa 1993)",
     publisher: "Microsoft Depress",
     publicationDate: "06/06/1993",
     isbn: "9780735619678OLD",
@@ -280,16 +282,16 @@ export const mockBooks = [
     rating: 4.0,
     ratingCount: 1337,
     imageUrl: "https://picsum.photos/200/300?old=1",
-    authors: ["Steve McConnell's Mullet"],
+    authors: ["A_13"],
     categories: ["Legacy Code", "Nostalgia"],
     comments: [
       {
         user: "COBOLCoder69",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Vẫn còn dùng được trong năm 2024 - Nếu bạn code cho cái máy fax"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Vẫn còn dùng được trong năm 2024 - Nếu bạn code cho cái máy fax",
+      },
+    ],
   },
   {
     id: "14",
@@ -301,62 +303,67 @@ export const mockBooks = [
     rating: 3.2,
     ratingCount: 404,
     imageUrl: "https://picsum.photos/200/300?devops=1",
-    authors: ["Gene Kim Jong-un", "Jezzz Humble"],
+    authors: ["A_14"],
     categories: ["Burnout", "Production Outages"],
     comments: [
       {
         user: "SREnial",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Học được cách deploy bug ra production nhanh gấp 10x - Cảm ơn anh DevOps!"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Học được cách deploy bug ra production nhanh gấp 10x - Cảm ơn anh DevOps!",
+      },
+    ],
   },
   {
     id: "15",
-    title: "Introduction to Algorithms: Because Job Interviews Weren't Stressful Enough",
+    title:
+      "Introduction to Algorithms: Because Job Interviews Weren't Stressful Enough",
     publisher: "The MIT Press F",
-    publicationDate: "09/11/2001", 
+    publicationDate: "09/11/2001",
     isbn: "9780262033848WTF",
     status: "Bricked",
     rating: 4.8,
     ratingCount: 3000,
     imageUrl: "https://picsum.photos/200/300?algo=1",
-    authors: ["Thomas H. Cormen My Balls", "Charles E. Leiserson's Midlife Crisis"],
+    authors: [
+      "A_14", "A_10"
+    ],
     categories: ["Masochism", "Big O Face"],
     comments: [
       {
         user: "FAANGOrDie",
-        date: "Unknown", 
-        rating: 0,      
-        text: "Mua 3 năm vẫn chưa mở seal - Nhưng phỏng vấn cứ tỏ ra đã đọc"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Mua 3 năm vẫn chưa mở seal - Nhưng phỏng vấn cứ tỏ ra đã đọc",
+      },
+    ],
   },
   {
     id: "16",
-    title: "Artificial Intelligence: A Modern Approach (To Failing Spectacularly)",
+    title:
+      "Artificial Intelligence: A Modern Approach (To Failing Spectacularly)",
     publisher: "Pearson of Despair",
-    publicationDate: "12/21/2012", 
+    publicationDate: "12/21/2012",
     isbn: "9780136042594AI",
     status: "Skynet",
     rating: 3.5,
     ratingCount: 1984,
     imageUrl: "https://picsum.photos/200/300?ai=1",
-    authors: ["Stuart J. Russell in the Streets", "Peter Norvig in the Sheets"],
+    authors: ["A_14"],
     categories: ["Hype Train", "Job Stealing"],
     comments: [
       {
         user: "MLBro",
         date: "Unknown",
-        rating: 0,       
-        text: "Đọc xong vẫn không train nổi model phân biệt chó mèo - AI winter coming!"
-      }
-    ]
+        rating: 0,
+        text: "Đọc xong vẫn không train nổi model phân biệt chó mèo - AI winter coming!",
+      },
+    ],
   },
   {
     id: "17",
-    title: "The Phoenix Project: How to Survive When Your Shit's Always Burning",
+    title:
+      "The Phoenix Project: How to Survive When Your Shit's Always Burning",
     publisher: "IT Disaster Press",
     publicationDate: "04/01/2018",
     isbn: "9780988262591FML",
@@ -364,41 +371,42 @@ export const mockBooks = [
     rating: 4.6,
     ratingCount: 666,
     imageUrl: "https://picsum.photos/200/300?burn=1",
-    authors: ["Gene Kimchi", "Kevin Behr's and Tears"],
+    authors: ["A_8", "A_9"],
     categories: ["Burnout", "DevOps Tears"],
     comments: [
       {
         user: "OnCallWarrior",
-        date: "Unknown", 
-        rating: 0,      
-        text: "Giờ tôi có thể thức trắng đêm fix prod mà không cần cocaine!"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Giờ tôi có thể thức trắng đêm fix prod mà không cần cocaine!",
+      },
+    ],
   },
   {
     id: "18",
     title: "C++ Primer: How to Memory Leak Like a Pro",
     publisher: "Undefined Behavior Press",
-    publicationDate: "00/00/1998", 
+    publicationDate: "00/00/1998",
     isbn: "0321714113SEGFAULT",
     status: "Core Dumped",
     rating: 2.9,
-    ratingCount: 0xDEADBEEF, 
+    ratingCount: 0xDEADBEEF,
     imageUrl: "https://picsum.photos/200/300?cpp=1",
-    authors: ["Stanley B. Lippman's Segfault", "Josée Lajoie's Memory Leak"],
+    authors: ["A_15"],
     categories: ["Pointer Hell", "Segmentation Faults"],
     comments: [
       {
         user: "CPlusPlusUltra",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Sách hay đến nỗi valgrind khóc thét mỗi khi tôi chạy code"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Sách hay đến nỗi valgrind khóc thét mỗi khi tôi chạy code",
+      },
+    ],
   },
   {
     id: "19",
-    title: "Test Driven Development: By Example (Of How to Drive Yourself Mad)",
+    title:
+      "Test Driven Development: By Example (Of How to Drive Yourself Mad)",
     publisher: "Addison-Wesn't",
     publicationDate: "05/05/2002",
     isbn: "9780321146533TDD",
@@ -406,20 +414,21 @@ export const mockBooks = [
     rating: 3.7,
     ratingCount: 200,
     imageUrl: "https://picsum.photos/200/300?tdd=1",
-    authors: ["Kent Beck My Patience"],
+    authors: ["A_16"],
     categories: ["OCD Coding", "Unit Test Cult"],
     comments: [
       {
         user: "TestAddict",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Viết test mất 5 tiếng, code chạy 5 phút - Productivity 📈"
-      }
-    ]
+        date: "Unknown",
+        rating: 0,
+        text: "Viết test mất 5 tiếng, code chạy 5 phút - Productivity 📈",
+      },
+    ],
   },
   {
     id: "20",
-    title: "Working Effectively With Legacy Code: A Survival Horror Guide",
+    title:
+      "Working Effectively With Legacy Code: A Survival Horror Guide",
     publisher: "Prentice Hell",
     publicationDate: "09/09/2004",
     isbn: "9780131177055WTF",
@@ -427,15 +436,15 @@ export const mockBooks = [
     rating: 4.0,
     ratingCount: 666,
     imageUrl: "https://picsum.photos/200/300?legacy=1",
-    authors: ["Michael C. Feathers His Nest"],
+    authors: ["A_17"],
     categories: ["Trauma", "Code Exorcism"],
     comments: [
       {
         user: "LegacyWarrior",
-        date: "Unknown", 
-        rating: 0,       
-        text: "Sách dạy cách refactor code người khác mà không bị đâm lén - 10/10 would survive again"
-      }
-    ]
-  }
+        date: "Unknown",
+        rating: 0,
+        text: "Sách dạy cách refactor code người khác mà không bị đâm lén - 10/10 would survive again",
+      },
+    ],
+  },
 ];

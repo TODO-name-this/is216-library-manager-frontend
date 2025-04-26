@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { mockBooks } from "@/lib/mockBook";
+import { mockAuthors } from "@/lib/mockAuthors";
 
 export default function BooksPage() {
   // State quản lý chức năng tìm kiếm, lọc và sắp xếp
@@ -12,9 +13,17 @@ export default function BooksPage() {
 
   // Lọc dữ liệu theo từ khóa và trạng thái
   const filteredBooks = mockBooks.filter((book) => {
+    const authorNames = (
+      Array.isArray(book.authors) ? book.authors : [book.authors]
+    )
+      .map(
+        (authorId) =>
+          mockAuthors.find((author) => author.id === authorId)?.name || ""
+      )
+      .join(" ");
     const searchMatch =
       book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.authors.join(" ").toLowerCase().includes(searchTerm.toLowerCase());
+      authorNames.toLowerCase().includes(searchTerm.toLowerCase());
     const statusMatch = filterStatus === "All" || book.status === filterStatus;
     return searchMatch && statusMatch;
   });
@@ -83,10 +92,10 @@ export default function BooksPage() {
                 src={book.imageUrl}
                 alt={book.title}
                 onError={(e) => {
-                    const img = e.currentTarget as HTMLImageElement;
-                    // Tạo URL placeholder với text là tiêu đề sách
-                    const text = encodeURIComponent(book.title);
-                    img.src = `https://via.placeholder.com/200x300?text=${text}`;
+                  const img = e.currentTarget as HTMLImageElement;
+                  // Tạo URL placeholder với text là tiêu đề sách
+                  const text = encodeURIComponent(book.title);
+                  img.src = `https://via.placeholder.com/200x300?text=${text}`;
                 }}
               />
             </div>

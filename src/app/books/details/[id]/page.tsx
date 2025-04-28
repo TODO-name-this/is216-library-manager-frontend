@@ -1,5 +1,7 @@
 //"use client";
 import { mockBooks as Book } from "@/lib/mockBook";
+import { mockAuthors } from "@/lib/mockAuthors";
+import Link from "next/link";
 // import { getAuthorsByBookId } from "@/app/actions/authorActions"
 // import { getBookById } from "@/app/actions/bookActions"
 // import { getCategoriesByBookId } from "@/app/actions/categoryActions"
@@ -21,7 +23,7 @@ export default async function Details({
   if (!book) {
     throw new Error(`Book with id ${id} not found`);
   }
-  
+
   return (
     <main className="w-full max-w-full rounded bg-gray-900 p-4 shadow text-white">
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-8">
@@ -49,15 +51,32 @@ export default async function Details({
 
           <p className="flex flex-wrap items-center gap-x-2 gap-y-2">
             <span>Author:</span>
-            {book.authors.map((author, index) => (
-              <a
-                key={index}
-                className="inline-block rounded border-2 border-blue-500 p-0.5 hover:bg-blue-500"
-                href="#"
-              >
-                {author}
-              </a>
-            ))}
+            {book.authors.map((authorId, index) => {
+              const authorProfile = mockAuthors.find(
+                (a) => a.id === authorId
+              );
+
+              if (authorProfile) {
+                return (
+                  <Link
+                    key={index}
+                    href={`/authors/details/${authorProfile.id}`}
+                    className="inline-block rounded border-2 border-blue-500 p-0.5 hover:bg-blue-500"
+                  >
+                    {authorProfile.name}
+                  </Link>
+                );
+              }
+              // Nếu không tìm thấy tác giả
+              return (
+                <span
+                  key={index}
+                  className="inline-block rounded border-2 border-blue-500 p-0.5"
+                >
+                  {authorId}
+                </span>
+              );
+            })}
           </p>
           <p className="flex flex-wrap items-center gap-x-2 gap-y-2">
             <span>Category:</span>

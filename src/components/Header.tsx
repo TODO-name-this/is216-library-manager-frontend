@@ -30,6 +30,16 @@ export default function Header() {
                         Books
                     </Link>
                     <Link
+                        href="/authors"
+                        className={`px-3 py-1 rounded-md transition-colors ${
+                            pathname.startsWith("/authors")
+                                ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                        }`}
+                    >
+                        Authors
+                    </Link>
+                    <Link
                         href="/qanda"
                         className={`px-3 py-1 rounded-md transition-colors ${
                             pathname.startsWith("/qanda")

@@ -16,15 +16,26 @@ interface ReservedItem {
 export default function ReservedBooks() {
   const [reservedItems, setReservedItems] = useState<ReservedItem[]>([]);
 
-  // load initial list of reserved bookIds with due dates
   useEffect(() => {
     const userReservations: string[] = mockReservation[currentUser] || [];
-    const items = userReservations.map((id) => {
-      const now = new Date();
-      const due = new Date(now.setDate(now.getDate() + 3));
+    const now = new Date();
+    const items: ReservedItem[] = userReservations.map((id) => {
+      const due = new Date();
+      due.setDate(now.getDate() + 3);
       return { id, dueDate: due.toISOString().slice(0, 10) };
     });
-    setReservedItems(items);
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const validItems = items.filter((item) => item.dueDate >= todayStr);
+    const validIds = validItems.map((item) => item.id);
+
+    if (validIds.length > 0) {
+      mockReservation[currentUser] = validIds;
+    } else {
+      delete mockReservation[currentUser];
+    }
+
+    setReservedItems(validItems);
   }, []);
 
   const handleRemove = (bookId: string) => {
@@ -79,7 +90,7 @@ export default function ReservedBooks() {
                 {book?.title}
               </td>
               <td className="px-4 py-3 text-gray-400">{authors}</td>
-              <td className="px-4 py-3 text-gray-400">{item.dueDate}</td>
+              <td className="px-4 py-3 text-gray-200">{item.dueDate}</td>
               <td className="px-4 py-3">
                 <button
                   onClick={() => handleRemove(item.id)}

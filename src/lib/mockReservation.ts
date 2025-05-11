@@ -1,0 +1,1 @@
+export const mockReservation: Record<string, string[]> = {};

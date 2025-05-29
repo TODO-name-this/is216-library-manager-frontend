@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { mockBooks as Book } from "@/lib/mockBook";
 import { mockAuthors } from "@/lib/mockAuthors";
@@ -12,9 +12,10 @@ const currentUser = mockUsers[0].cccd;
 
 export default function Details() {
   const { id } = useParams<{ id: string }>();
-  const book = Book.find((b) => b.id === id);
-  if (!book) throw new Error(`Book with id ${id} not found`);
+  const router = useRouter();
 
+  const bookIndex = Book.findIndex((b) => b.id === id);
+  const book = Book[bookIndex];
   const [reservedList, setReservedList] = useState<string[]>([]);
 
   useEffect(() => {
@@ -25,10 +26,12 @@ export default function Details() {
   }, [book.id]);
 
   const hasReserved = mockReservation[currentUser]?.includes(book.id) ?? false;
-  const totalCopies = 20;
+  const totalCopies = book.totalCopies;
   const checkedOut = reservedList.length;
   const available = totalCopies - checkedOut;
   const isFull = checkedOut >= totalCopies;
+  const isUserMaxed = (mockReservation[currentUser]?.length || 0) >= 5;
+  const canReserve = totalCopies >= 5 && !hasReserved && !isFull && !isUserMaxed;
 
   const handleReserve = () => {
     const userReservations = mockReservation[currentUser] || [];
@@ -42,25 +45,47 @@ export default function Details() {
     alert("Reservation successful!");
   };
 
+  const handleDelete = () => {
+    if (!confirm("Are you sure you want to delete this book?")) {
+      return;
+    }
+    // Xóa khỏi mockBooks
+    Book.splice(bookIndex, 1);
+    alert("Book deleted successfully.");
+    router.push("/books");
+  };
+
   const authors = book.authors
     .map((aid) => mockAuthors.find((a) => a.id === aid)?.name)
     .filter(Boolean)
     .join(", ");
-
-  const isUserMaxed = (mockReservation[currentUser]?.length || 0) >= 5;
 
   return (
     <main className="min-h-screen p-6 bg-gray-900 text-white">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           {/* --- ảnh + info --- */}
-          <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-8">
-            <div className="flex-shrink-0">
+          <div className="flex flex-col space-y-6 md:flex-row md:space-y-0 md:space-x-8">
+            <div className="flex flex-col items-center space-y-4 flex-shrink-0">
               <img
-                className="mx-auto h-auto w-78 rounded shadow-lg"
+                className="h-auto w-78 rounded shadow-lg"
                 src={book.imageUrl}
                 alt={book.title}
               />
+              <div className="flex space-x-3">
+                <Link
+                  href={`/books/edit/${book.id}`}
+                  className="py-2 px-4 bg-blue-500 hover:bg-blue-600 rounded font-medium w-fit"
+                >
+                  Sửa
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium"
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
             <div className="flex flex-col justify-center space-y-4">
               <h2 className="text-3xl font-bold">{book.title}</h2>
@@ -174,15 +199,17 @@ export default function Details() {
             </div>
             <hr className="my-4 border-gray-700" />
             <button
-              disabled={hasReserved || isFull || isUserMaxed}
+              disabled={!canReserve}
               onClick={handleReserve}
               className={`w-full py-2 rounded-lg font-medium transition ${
-                hasReserved || isFull || isUserMaxed
+                !canReserve 
                   ? "bg-gray-600 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-500"
               }`}
             >
-              {hasReserved
+              {!canReserve
+                ? "Cannot Reserve (< 5 copies)"
+                : hasReserved
                 ? "Already Reserved"
                 : isFull
                 ? `Full (${totalCopies}/${totalCopies})`

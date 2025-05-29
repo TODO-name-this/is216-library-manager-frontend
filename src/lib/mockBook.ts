@@ -8,24 +8,14 @@ export const mockBooks = [
     status: "Unavailable",
     rating: 4.3,
     ratingCount: 312,
-    imageUrl:
-      "https://miro.medium.com/v2/resize:fit:1103/1*PKsDuPxNoKJyJvmlLc64qg.jpeg",
+    imageUrl: "https://miro.medium.com/v2/resize:fit:1103/1*PKsDuPxNoKJyJvmlLc64qg.jpeg",
     authors: ["A_1", "A_2"],
     categories: ["Software Engineering", "Best Practices"],
     comments: [
-      {
-        user: "Bob",
-        date: "12/02/2024",
-        rating: 4,
-        text: "This book is as fantastic as debugging at 3am with no coffee.",
-      },
-      {
-        user: "Diddy",
-        date: "12/02/2024",
-        rating: 5,
-        text: "Reads smoother than my Git merge conflicts.",
-      },
+      { user: "Bob", date: "12/02/2024", rating: 4, text: "This book is as fantastic as debugging at 3am with no coffee." },
+      { user: "Diddy", date: "12/02/2024", rating: 5, text: "Reads smoother than my Git merge conflicts." }
     ],
+    totalCopies: 10,
   },
   {
     id: "2",
@@ -40,19 +30,10 @@ export const mockBooks = [
     authors: ["A_3", "A_1"],
     categories: ["JavaScript", "Programming"],
     comments: [
-      {
-        user: "Alice",
-        date: "03/10/2024",
-        rating: 5,
-        text: "This book slapped harder than my keyboard after a failed deploy.",
-      },
-      {
-        user: "Ben",
-        date: "03/11/2024",
-        rating: 4,
-        text: "Made me realize I've been writing JS like it's a cooking recipe... with no ingredients.",
-      },
+      { user: "Alice", date: "03/10/2024", rating: 5, text: "This book slapped harder than my keyboard after a failed deploy." },
+      { user: "Ben", date: "03/11/2024", rating: 4, text: "Made me realize I've been writing JS like it's a cooking recipe... with no ingredients." }
     ],
+    totalCopies: 12,
   },
   {
     id: "3",
@@ -67,19 +48,10 @@ export const mockBooks = [
     authors: ["Andrew Hunt", "David Thomas"],
     categories: ["Software Development", "Career"],
     comments: [
-      {
-        user: "CoderDan",
-        date: "05/01/2024",
-        rating: 5,
-        text: "This book changed me more than my last breakup.",
-      },
-      {
-        user: "HexBug",
-        date: "05/03/2024",
-        rating: 5,
-        text: "Reading this made my code cleaner than my browser history.",
-      },
+      { user: "CoderDan", date: "05/01/2024", rating: 5, text: "This book changed me more than my last breakup." },
+      { user: "HexBug", date: "05/03/2024", rating: 5, text: "Reading this made my code cleaner than my browser history." }
     ],
+    totalCopies: 15,
   },
   {
     id: "4",
@@ -94,13 +66,9 @@ export const mockBooks = [
     authors: ["A_4", "A_5"],
     categories: ["Technical Debt", "Regret"],
     comments: [
-      {
-        user: "CodeMasturbator",
-        date: "Unknown",
-        rating: 0,
-        text: "Đọc xong mới biết mình không phải developer mà là thợ copy-paste nghiện caffeine",
-      },
+      { user: "CodeMasturbator", date: "Unknown", rating: 0, text: "Đọc xong mới biết mình không phải developer mà là thợ copy-paste nghiện caffeine" }
     ],
+    totalCopies: 11,
   },
   {
     id: "5",
@@ -115,13 +83,9 @@ export const mockBooks = [
     authors: ["A_6", "A_7"],
     categories: ["Denial", "Stockholm Syndrome"],
     comments: [
-      {
-        user: "ReactFanboy69",
-        date: "Unknown",
-        rating: 0,
-        text: "Sách hay đến nỗi vợ bỏ đi theo thằng DevOps",
-      },
+      { user: "ReactFanboy69", date: "Unknown", rating: 0, text: "Sách hay đến nỗi vợ bỏ đi theo thằng DevOps" }
     ],
+    totalCopies: 13,
   },
   {
     id: "6",
@@ -136,13 +100,9 @@ export const mockBooks = [
     authors: ["A_8", "A_9"],
     categories: ["Overengineering", "Job Security"],
     comments: [
-      {
-        user: "SeniorDev10x",
-        date: "Unknown",
-        rating: 0,
-        text: "Biến 5 dòng code thành 50 class - Thăng chức here we go!",
-      },
+      { user: "SeniorDev10x", date: "Unknown", rating: 0, text: "Biến 5 dòng code thành 50 class - Thăng chức here we go!" }
     ],
+    totalCopies: 14,
   },
   {
     id: "7",
@@ -157,13 +117,9 @@ export const mockBooks = [
     authors: ["A_9", "A_10"],
     categories: ["Tutorial Hell", "Imposter Syndrome"],
     comments: [
-      {
-        user: "ScriptKiddie",
-        date: "Unknown",
-        rating: 0,
-        text: "Học xong vẫn không phân biệt được list với dictionary - 10/10 would fail again",
-      },
+      { user: "ScriptKiddie", date: "Unknown", rating: 0, text: "Học xong vẫn không phân biệt được list với dictionary - 10/10 would fail again" }
     ],
+    totalCopies: 10,
   },
   {
     id: "8",
@@ -178,13 +134,9 @@ export const mockBooks = [
     authors: ["A_11"],
     categories: ["Anxiety", "Existential Crisis"],
     comments: [
-      {
-        user: "JoblessGrad",
-        date: "Unknown",
-        rating: 0,
-        text: "Luyện xong 500 câu vẫn trượt phỏng vấn intern - Đẳng cấp fail khác biệt",
-      },
+      { user: "JoblessGrad", date: "Unknown", rating: 0, text: "Luyện xong 500 câu vẫn trượt phỏng vấn intern - Đẳng cấp fail khác biệt" }
     ],
+    totalCopies: 10,
   },
   {
     id: "9",
@@ -199,13 +151,9 @@ export const mockBooks = [
     authors: ["A_12"],
     categories: ["Management Fails", "Vintage Hype"],
     comments: [
-      {
-        user: "ScrumMasterFlash",
-        date: "Unknown",
-        rating: 0,
-        text: "9 women can't make a baby in 1 month - Nhưng sếp tao vẫn nghĩ được đấy!",
-      },
+      { user: "ScrumMasterFlash", date: "Unknown", rating: 0, text: "9 women can't make a baby in 1 month - Nhưng sếp tao vẫn nghĩ được đấy!" }
     ],
+    totalCopies: 10,
   },
   {
     id: "10",
@@ -220,13 +168,9 @@ export const mockBooks = [
     authors: ["A_10"],
     categories: ["UX Nightmares", "Client Stupidity"],
     comments: [
-      {
-        user: "FrontendFucker",
-        date: "Unknown",
-        rating: 0,
-        text: "Đọc xong vẫn phải làm pop-up quảng cáo che 90% màn hình - Đời là thế đấy!",
-      },
+      { user: "FrontendFucker", date: "Unknown", rating: 0, text: "Đọc xong vẫn phải làm pop-up quảng cáo che 90% màn hình - Đời là thế đấy!" }
     ],
+    totalCopies: 20,
   },
   {
     id: "11",
@@ -241,18 +185,13 @@ export const mockBooks = [
     authors: ["A_13"],
     categories: ["Masochism", "Flexing 101"],
     comments: [
-      {
-        user: "CSMajorTryhard",
-        date: "Unknown",
-        rating: 0,
-        text: "Mua để khoe mác - Đọc được 3 trang thì ngộ độc ký hiệu toán",
-      },
+      { user: "CSMajorTryhard", date: "Unknown", rating: 0, text: "Mua để khoe mác - Đọc được 3 trang thì ngộ độc ký hiệu toán" }
     ],
+    totalCopies: 10,
   },
   {
     id: "12",
-    title:
-      "Head First Design Patterns: A Brain-Friendly Guide to Overcomplicating Shit",
+    title: "Head First Design Patterns: A Brain-Friendly Guide to Overcomplicating Shit",
     publisher: "O'Really? Media",
     publicationDate: "10/10/2010",
     isbn: "0596007124YOLO",
@@ -263,18 +202,13 @@ export const mockBooks = [
     authors: ["A_12"],
     categories: ["Overengineering", "OOP Fetish"],
     comments: [
-      {
-        user: "PatternWhore",
-        date: "Unknown",
-        rating: 0,
-        text: "Giờ tôi có thể biến Hello World thành 15 lớp abstract factory - Triệu đô here I come!",
-      },
+      { user: "PatternWhore", date: "Unknown", rating: 0, text: "Giờ tôi có thể biến Hello World thành 15 lớp abstract factory - Triệu đô here I come!" }
     ],
+    totalCopies: 10,
   },
   {
     id: "13",
-    title:
-      "Code Complete: A Practical Handbook of Software Construction (Circa 1993)",
+    title: "Code Complete: A Practical Handbook of Software Construction (Circa 1993)",
     publisher: "Microsoft Depress",
     publicationDate: "06/06/1993",
     isbn: "9780735619678OLD",
@@ -285,13 +219,9 @@ export const mockBooks = [
     authors: ["A_13"],
     categories: ["Legacy Code", "Nostalgia"],
     comments: [
-      {
-        user: "COBOLCoder69",
-        date: "Unknown",
-        rating: 0,
-        text: "Vẫn còn dùng được trong năm 2024 - Nếu bạn code cho cái máy fax",
-      },
+      { user: "COBOLCoder69", date: "Unknown", rating: 0, text: "Vẫn còn dùng được trong năm 2024 - Nếu bạn code cho cái máy fax" }
     ],
+    totalCopies: 10,
   },
   {
     id: "14",
@@ -306,18 +236,13 @@ export const mockBooks = [
     authors: ["A_14"],
     categories: ["Burnout", "Production Outages"],
     comments: [
-      {
-        user: "SREnial",
-        date: "Unknown",
-        rating: 0,
-        text: "Học được cách deploy bug ra production nhanh gấp 10x - Cảm ơn anh DevOps!",
-      },
+      { user: "SREnial", date: "Unknown", rating: 0, text: "Học được cách deploy bug ra production nhanh gấp 10x - Cảm ơn anh DevOps!" }
     ],
+    totalCopies: 50,
   },
   {
     id: "15",
-    title:
-      "Introduction to Algorithms: Because Job Interviews Weren't Stressful Enough",
+    title: "Introduction to Algorithms: Because Job Interviews Weren't Stressful Enough",
     publisher: "The MIT Press F",
     publicationDate: "09/11/2001",
     isbn: "9780262033848WTF",
@@ -325,23 +250,16 @@ export const mockBooks = [
     rating: 4.8,
     ratingCount: 3000,
     imageUrl: "https://picsum.photos/200/300?algo=1",
-    authors: [
-      "A_14", "A_10"
-    ],
+    authors: ["A_14", "A_10"],
     categories: ["Masochism", "Big O Face"],
     comments: [
-      {
-        user: "FAANGOrDie",
-        date: "Unknown",
-        rating: 0,
-        text: "Mua 3 năm vẫn chưa mở seal - Nhưng phỏng vấn cứ tỏ ra đã đọc",
-      },
+      { user: "FAANGOrDie", date: "Unknown", rating: 0, text: "Mua 3 năm vẫn chưa mở seal - Nhưng phỏng vấn cứ tỏ ra đã đọc" }
     ],
+    totalCopies: 60,
   },
   {
     id: "16",
-    title:
-      "Artificial Intelligence: A Modern Approach (To Failing Spectacularly)",
+    title: "Artificial Intelligence: A Modern Approach (To Failing Spectacularly)",
     publisher: "Pearson of Despair",
     publicationDate: "12/21/2012",
     isbn: "9780136042594AI",
@@ -352,18 +270,13 @@ export const mockBooks = [
     authors: ["A_14"],
     categories: ["Hype Train", "Job Stealing"],
     comments: [
-      {
-        user: "MLBro",
-        date: "Unknown",
-        rating: 0,
-        text: "Đọc xong vẫn không train nổi model phân biệt chó mèo - AI winter coming!",
-      },
+      { user: "MLBro", date: "Unknown", rating: 0, text: "Đọc xong vẫn không train nổi model phân biệt chó mèo - AI winter coming!" }
     ],
+    totalCopies: 10,
   },
   {
     id: "17",
-    title:
-      "The Phoenix Project: How to Survive When Your Shit's Always Burning",
+    title: "The Phoenix Project: How to Survive When Your Shit's Always Burning",
     publisher: "IT Disaster Press",
     publicationDate: "04/01/2018",
     isbn: "9780988262591FML",
@@ -374,13 +287,9 @@ export const mockBooks = [
     authors: ["A_8", "A_9"],
     categories: ["Burnout", "DevOps Tears"],
     comments: [
-      {
-        user: "OnCallWarrior",
-        date: "Unknown",
-        rating: 0,
-        text: "Giờ tôi có thể thức trắng đêm fix prod mà không cần cocaine!",
-      },
+      { user: "OnCallWarrior", date: "Unknown", rating: 0, text: "Giờ tôi có thể thức trắng đêm fix prod mà không cần cocaine!" }
     ],
+    totalCopies: 30,
   },
   {
     id: "18",
@@ -395,18 +304,13 @@ export const mockBooks = [
     authors: ["A_15"],
     categories: ["Pointer Hell", "Segmentation Faults"],
     comments: [
-      {
-        user: "CPlusPlusUltra",
-        date: "Unknown",
-        rating: 0,
-        text: "Sách hay đến nỗi valgrind khóc thét mỗi khi tôi chạy code",
-      },
+      { user: "CPlusPlusUltra", date: "Unknown", rating: 0, text: "Sách hay đến nỗi valgrind khóc thét mỗi khi tôi chạy code" }
     ],
+    totalCopies: 10,
   },
   {
     id: "19",
-    title:
-      "Test Driven Development: By Example (Of How to Drive Yourself Mad)",
+    title: "Test Driven Development: By Example (Of How to Drive Yourself Mad)",
     publisher: "Addison-Wesn't",
     publicationDate: "05/05/2002",
     isbn: "9780321146533TDD",
@@ -417,18 +321,13 @@ export const mockBooks = [
     authors: ["A_16"],
     categories: ["OCD Coding", "Unit Test Cult"],
     comments: [
-      {
-        user: "TestAddict",
-        date: "Unknown",
-        rating: 0,
-        text: "Viết test mất 5 tiếng, code chạy 5 phút - Productivity 📈",
-      },
+      { user: "TestAddict", date: "Unknown", rating: 0, text: "Viết test mất 5 tiếng, code chạy 5 phút - Productivity 📈" }
     ],
+    totalCopies: 17,
   },
   {
     id: "20",
-    title:
-      "Working Effectively With Legacy Code: A Survival Horror Guide",
+    title: "Working Effectively With Legacy Code: A Survival Horror Guide",
     publisher: "Prentice Hell",
     publicationDate: "09/09/2004",
     isbn: "9780131177055WTF",
@@ -439,12 +338,8 @@ export const mockBooks = [
     authors: ["A_17"],
     categories: ["Trauma", "Code Exorcism"],
     comments: [
-      {
-        user: "LegacyWarrior",
-        date: "Unknown",
-        rating: 0,
-        text: "Sách dạy cách refactor code người khác mà không bị đâm lén - 10/10 would survive again",
-      },
+      { user: "LegacyWarrior", date: "Unknown", rating: 0, text: "Sách dạy cách refactor code người khác mà không bị đâm lén - 10/10 would survive again" }
     ],
-  },
+    totalCopies: 21,
+  }
 ];

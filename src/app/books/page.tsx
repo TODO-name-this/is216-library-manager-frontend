@@ -168,6 +168,14 @@ export default function BooksPage() {
           </div>
         ))}
       </div>
+
+      {/* add book button */}
+      <Link
+        href="/books/add"
+        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all"
+      >
+        <span className="text-2xl leading-none">+</span>
+      </Link>
     </main>
   );
 }

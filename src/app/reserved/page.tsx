@@ -90,7 +90,7 @@ export default function ReservedBooks() {
                 {book?.title}
               </td>
               <td className="px-4 py-3 text-gray-400">{authors}</td>
-              <td className="px-4 py-3 text-gray-200">{item.dueDate}</td>
+              <td className="px-4 py-3 text-gray-400">{item.dueDate}</td>
               <td className="px-4 py-3">
                 <button
                   onClick={() => handleRemove(item.id)}

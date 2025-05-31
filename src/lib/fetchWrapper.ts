@@ -1,39 +1,55 @@
-const baseUrl = process.env.NEXT_PUBLIC_API_URL
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-async function get(url: string, headers = {}) {
-    const requestOptions = {
+// Get JWT token from localStorage
+function getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem("jwt_token")
+    if (token) {
+        return {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+    return {}
+}
+
+async function get(url: string, includeAuth = true) {
+    const headers: Record<string, string> = includeAuth ? getAuthHeaders() : {}
+    const requestOptions: RequestInit = {
         method: "GET",
         headers,
-    };
+    }
 
-    console.log("Client fetch to:", baseUrl + url);
-    const response = await fetch(baseUrl + url, requestOptions);
-    
-    return handleResponse(response);
+    console.log("Client fetch to:", baseUrl + url)
+    const response = await fetch(baseUrl + url, requestOptions)
+
+    return handleResponse(response)
 }
 
-async function post(url: string, body: {}, headers = {}) {
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            "Content-type": "application/json",
-            ...headers
-        },
-        body: JSON.stringify(body)
-    };
-    const response = await fetch(baseUrl + url, requestOptions);
+async function post(url: string, body: {}, includeAuth = true) {
+    const authHeaders = includeAuth ? getAuthHeaders() : {}
+    const headers: Record<string, string> = {
+        "Content-type": "application/json",
+        ...authHeaders,
+    }
+    const requestOptions: RequestInit = {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+    }
+    const response = await fetch(baseUrl + url, requestOptions)
 
-    return handleResponse(response);
+    return handleResponse(response)
 }
 
-async function put(url: string, body: {}, headers = {}) {
-    const requestOptions = {
-        method: 'PUT',
-        headers: {
-            "Content-type": "application/json",
-            ...headers
-        },
-        body: JSON.stringify(body)
+async function put(url: string, body: {}, includeAuth = true) {
+    const authHeaders = includeAuth ? getAuthHeaders() : {}
+    const headers: Record<string, string> = {
+        "Content-type": "application/json",
+        ...authHeaders,
+    }
+    const requestOptions: RequestInit = {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(body),
     }
 
     const response = await fetch(baseUrl + url, requestOptions)
@@ -41,9 +57,10 @@ async function put(url: string, body: {}, headers = {}) {
     return handleResponse(response)
 }
 
-async function del(url: string, headers = {}) {
-    const requestOptions = {
-        method: 'DELETE',
+async function del(url: string, includeAuth = true) {
+    const headers: Record<string, string> = includeAuth ? getAuthHeaders() : {}
+    const requestOptions: RequestInit = {
+        method: "DELETE",
         headers,
     }
 
@@ -52,14 +69,16 @@ async function del(url: string, headers = {}) {
     return handleResponse(response)
 }
 
-async function patch(url: string, body: {}, headers = {}) {
-    const requestOptions = {
-        method: 'PATCH',
-        headers: {
-            "Content-type": "application/json",
-            ...headers
-        },
-        body: JSON.stringify(body)
+async function patch(url: string, body: {}, includeAuth = true) {
+    const authHeaders = includeAuth ? getAuthHeaders() : {}
+    const headers: Record<string, string> = {
+        "Content-type": "application/json",
+        ...authHeaders,
+    }
+    const requestOptions: RequestInit = {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(body),
     }
 
     const response = await fetch(baseUrl + url, requestOptions)
@@ -94,3 +113,6 @@ export const fetchWrapper = {
     del,
     patch,
 }
+
+// Default export for easier importing
+export default fetchWrapper

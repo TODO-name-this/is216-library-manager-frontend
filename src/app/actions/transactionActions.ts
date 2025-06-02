@@ -9,14 +9,28 @@ import type {
 
 export async function getAllTransactions(): Promise<Transaction[]> {
     try {
-        const response = await transactionAPI.getTransactions()
-        if (response.error) {
+        const response = await transactionAPI.getAll()
+        if ("error" in response) {
             console.error("Failed to fetch transactions:", response.error)
             return []
         }
-        return response.data || []
+        return response || []
     } catch (error) {
         console.error("Error fetching transactions:", error)
+        throw error
+    }
+}
+
+export async function getMyTransactions(): Promise<Transaction[]> {
+    try {
+        const response = await transactionAPI.getMy()
+        if ("error" in response) {
+            console.error("Failed to fetch your transactions:", response.error)
+            return []
+        }
+        return response || []
+    } catch (error) {
+        console.error("Error fetching your transactions:", error)
         throw error
     }
 }

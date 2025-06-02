@@ -10,7 +10,7 @@ export const publisherAPI = {
     // Get all publishers
     getPublishers: async (): Promise<ApiResponse<Publisher[]>> => {
         try {
-            const response = await fetchWrapper.get("/api/publisher")
+            const response = await fetchWrapper.get("/publisher")
             return { data: response }
         } catch (error: any) {
             return {
@@ -37,7 +37,7 @@ export const publisherAPI = {
     ): Promise<ApiResponse<Publisher>> => {
         try {
             const response = await fetchWrapper.post(
-                "/api/publisher",
+                "/publisher",
                 publisherData
             )
             return { data: response }
@@ -78,3 +78,4 @@ export const publisherAPI = {
         }
     },
 }
+

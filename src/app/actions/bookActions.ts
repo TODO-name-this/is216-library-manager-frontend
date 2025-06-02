@@ -4,12 +4,37 @@ import { bookTitleAPI, bookCopyAPI } from "@/lib/api"
 import { BookTitle, BookCopy } from "@/lib/api/types"
 
 export async function getAllBooks(): Promise<BookTitle[]> {
-    const response = await bookTitleAPI.getBookTitles()
-    if (response.error) {
-        console.error("Failed to fetch books:", response.error)
+    try {
+        const response = await bookTitleAPI.getBookTitles()
+        console.log("Book API response:", response)
+
+        // The API response is now { data: BookTitle[] } or { error: any }
+        if (response.error) {
+            console.error("Failed to fetch books:", response.error)
+            return []
+        }
+
+        const books = response.data || []
+        console.log(
+            "Books data:",
+            books,
+            "Type:",
+            typeof books,
+            "Is array?",
+            Array.isArray(books)
+        )
+
+        // Extra validation to ensure we return an array
+        if (Array.isArray(books)) {
+            return books
+        } else {
+            console.error("Books data is not an array:", books)
+            return []
+        }
+    } catch (error) {
+        console.error("Error in getAllBooks:", error)
         return []
     }
-    return response.data || []
 }
 
 export async function getBookById(id: string): Promise<BookTitle | null> {
@@ -22,9 +47,17 @@ export async function getBookById(id: string): Promise<BookTitle | null> {
 }
 
 export async function createBook(bookData: {
+    imageUrl: string
     title: string
-    author: string
-    publisher: string
+    isbn: string
+    canBorrow: boolean
+    price: number
+    publishedDate: string
+    publisherId: string
+    totalCopies: number
+    maxOnlineReservations: number
+    authorIds: string[]
+    categoryIds: string[]
 }): Promise<BookTitle | null> {
     const response = await bookTitleAPI.createBookTitle(bookData)
     if (response.error) {
@@ -37,9 +70,17 @@ export async function createBook(bookData: {
 export async function updateBook(
     id: string,
     bookData: {
+        imageUrl?: string
         title?: string
-        author?: string
-        publisher?: string
+        isbn?: string
+        canBorrow?: boolean
+        price?: number
+        publishedDate?: string
+        publisherId?: string
+        totalCopies?: number
+        maxOnlineReservations?: number
+        authorIds?: string[]
+        categoryIds?: string[]
     }
 ): Promise<BookTitle | null> {
     const response = await bookTitleAPI.updateBookTitle(id, bookData)

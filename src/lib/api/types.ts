@@ -14,6 +14,7 @@ export interface BookTitle {
     title: string
     isbn: string
     canBorrow: boolean
+    price: number
     publishedDate: string
     publisherId: string
     authorIds: string[] | null
@@ -21,6 +22,12 @@ export interface BookTitle {
     authorNames: string[]
     categoryNames: string[]
     reviews?: Review[]
+    totalCopies: number
+    availableCopies: number
+    onlineReservations: number
+    maxOnlineReservations: number
+    userReservationsForThisBook: number | null
+    maxUserReservations: number | null
 }
 
 export interface BookCopy {
@@ -40,11 +47,16 @@ export interface Author {
 export interface Publisher {
     id: string
     name: string
+    address?: string | null
+    logoUrl?: string | null
+    email?: string | null
+    phone?: string | null
 }
 
 export interface Category {
     id: string
     name: string
+    description?: string | null
 }
 
 export interface Review {
@@ -58,15 +70,34 @@ export interface Review {
 
 export interface Reservation {
     id: string
+    reservationDate: string
+    expirationDate: string
+    status: "PENDING" | "APPROVED" | "CANCELLED" | "COMPLETED"
+    deposit: number
+    bookTitleId: string
+    bookCopyId: string | null
     userId: string
-    bookId: string
-    status: "PENDING" | "APPROVED" | "CANCELLED"
+    bookTitle: string
+    bookImageUrl: string
+    bookAuthors: string[]
+}
+
+export interface TransactionDetail {
+    transactionId: string
+    bookCopyId: string
+    returnedDate: string | null
+    penaltyFee: number
+    bookTitle: string
+    bookImageUrl: string
+    bookAuthors: string[]
 }
 
 export interface Transaction {
     id: string
+    borrowDate: string
+    dueDate: string
     userId: string
-    status: "PENDING" | "COMPLETED" | "CANCELLED"
+    details: TransactionDetail[]
 }
 
 export interface Question {
@@ -86,7 +117,16 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string
+    accessToken: string
+    refreshToken: string
+}
+
+export interface DecodedToken {
+    sub: string // User ID
+    role: "ADMIN" | "LIBRARIAN" | "USER"
+    type: "access" | "refresh"
+    iat: number
+    exp: number
 }
 
 // Generic API Response Types
@@ -114,39 +154,71 @@ export interface UpdateUserRequest {
 }
 
 export interface CreateBookTitleRequest {
+    imageUrl: string
     title: string
-    author: string
-    publisher: string
+    isbn: string
+    canBorrow: boolean
+    price: number
+    publishedDate: string
+    publisherId: string
+    totalCopies: number
+    maxOnlineReservations: number
+    authorIds: string[]
+    categoryIds: string[]
 }
 
 export interface UpdateBookTitleRequest {
+    imageUrl?: string
     title?: string
-    author?: string
-    publisher?: string
+    isbn?: string
+    canBorrow?: boolean
+    price?: number
+    publishedDate?: string
+    publisherId?: string
+    totalCopies?: number
+    maxOnlineReservations?: number
+    authorIds?: string[]
+    categoryIds?: string[]
 }
 
 export interface CreateAuthorRequest {
     name: string
+    avatarUrl?: string
+    birthday?: string // ISO date string
+    biography?: string
 }
 
 export interface UpdateAuthorRequest {
-    name: string
+    name?: string
+    avatarUrl?: string
+    birthday?: string // ISO date string
+    biography?: string
 }
 
 export interface CreatePublisherRequest {
     name: string
+    address: string
+    logoUrl?: string
+    email?: string
+    phone?: string
 }
 
 export interface UpdatePublisherRequest {
-    name: string
+    name?: string
+    address?: string
+    logoUrl?: string
+    email?: string
+    phone?: string
 }
 
 export interface CreateCategoryRequest {
     name: string
+    description: string
 }
 
 export interface UpdateCategoryRequest {
-    name: string
+    name?: string
+    description?: string
 }
 
 export interface CreateReviewRequest {
@@ -161,7 +233,8 @@ export interface UpdateReviewRequest {
 }
 
 export interface CreateReservationRequest {
-    bookId: string
+    bookTitleId: string
+    bookCopyId: string
 }
 
 export interface UpdateReservationRequest {
@@ -173,12 +246,15 @@ export interface CreateBookCopyRequest {
 }
 
 export interface CreateTransactionRequest {
+    borrowDate: string
+    dueDate: string
     userId: string
-    bookCopyId: string
 }
 
 export interface UpdateTransactionRequest {
-    status: "PENDING" | "COMPLETED" | "CANCELLED"
+    borrowDate?: string
+    dueDate?: string
+    userId?: string
 }
 
 export interface CreateQuestionRequest {
@@ -190,29 +266,4 @@ export interface UpdateQuestionRequest {
     answer?: string
     answeredBy?: string
     answeredDate?: string
-}
-
-export interface Transaction {
-    id: string
-    userId: string
-    bookCopyId?: string
-    status: "PENDING" | "COMPLETED" | "CANCELLED"
-}
-
-export interface AuthResponse {
-    token: string
-}
-
-export interface LoginRequest {
-    cccd: string
-    password: string
-}
-
-export interface ApiError {
-    error: string
-}
-
-export interface ApiResponse<T> {
-    data?: T
-    error?: ApiError
 }

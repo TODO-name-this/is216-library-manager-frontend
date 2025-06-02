@@ -5,7 +5,7 @@ export const bookCopyAPI = {
     // Get all book copies
     getBookCopies: async (): Promise<ApiResponse<BookCopy[]>> => {
         try {
-            const response = await fetchWrapper.get("/api/bookCopy")
+            const response = await fetchWrapper.get("/bookCopy")
             return { data: response }
         } catch (error: any) {
             return {
@@ -34,7 +34,7 @@ export const bookCopyAPI = {
     ): Promise<ApiResponse<BookCopy>> => {
         try {
             const response = await fetchWrapper.post(
-                "/api/bookCopy",
+                "/bookCopy",
                 bookCopyData
             )
             return { data: response }
@@ -56,3 +56,4 @@ export const bookCopyAPI = {
         }
     },
 }
+

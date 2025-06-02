@@ -10,19 +10,17 @@ export const userAPI = {
     // Get all users
     getUsers: async (): Promise<ApiResponse<User[]>> => {
         try {
-            const response = await fetchWrapper.get("/api/user")
+            const response = await fetchWrapper.get("/user")
             return { data: response }
         } catch (error: any) {
             return {
                 error: { error: error.message || "Failed to fetch users" },
             }
         }
-    },
-
-    // Get user by ID
+    }, // Get user by ID
     getUserById: async (id: number): Promise<ApiResponse<User>> => {
         try {
-            const response = await fetchWrapper.get(`/api/user/${id}`)
+            const response = await fetchWrapper.get(`/user/${id}`)
             return { data: response }
         } catch (error: any) {
             return { error: { error: error.message || "Failed to fetch user" } }
@@ -34,7 +32,7 @@ export const userAPI = {
         userData: CreateUserRequest
     ): Promise<ApiResponse<User>> => {
         try {
-            const response = await fetchWrapper.post("/api/user", userData)
+            const response = await fetchWrapper.post("/user", userData)
             return { data: response }
         } catch (error: any) {
             return {
@@ -49,7 +47,7 @@ export const userAPI = {
         userData: UpdateUserRequest
     ): Promise<ApiResponse<User>> => {
         try {
-            const response = await fetchWrapper.put(`/api/user/${id}`, userData)
+            const response = await fetchWrapper.put(`/user/${id}`, userData)
             return { data: response }
         } catch (error: any) {
             return {
@@ -61,7 +59,7 @@ export const userAPI = {
     // Delete user
     deleteUser: async (id: number): Promise<ApiResponse<void>> => {
         try {
-            await fetchWrapper.del(`/api/user/${id}`)
+            await fetchWrapper.del(`/user/${id}`)
             return { data: undefined }
         } catch (error: any) {
             return {

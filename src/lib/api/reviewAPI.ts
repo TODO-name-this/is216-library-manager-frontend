@@ -10,7 +10,7 @@ export const reviewAPI = {
     // Get review by ID
     getById: async (id: string): Promise<Review | ApiError> => {
         try {
-            const response = await fetchWrapper.get(`/api/review/${id}`)
+            const response = await fetchWrapper.get(`/review/${id}`)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to fetch review",
@@ -27,7 +27,7 @@ export const reviewAPI = {
         reviewData: CreateReviewRequest
     ): Promise<Review | ApiError> => {
         try {
-            const response = await fetchWrapper.post("/api/review", reviewData)
+            const response = await fetchWrapper.post("/review", reviewData)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to create review",
@@ -45,10 +45,7 @@ export const reviewAPI = {
         reviewData: UpdateReviewRequest
     ): Promise<Review | ApiError> => {
         try {
-            const response = await fetchWrapper.put(
-                `/api/review/${id}`,
-                reviewData
-            )
+            const response = await fetchWrapper.put(`/review/${id}`, reviewData)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to update review",
@@ -63,7 +60,7 @@ export const reviewAPI = {
     // Delete review (ADMIN, LIBRARIAN, USER)
     delete: async (id: string): Promise<string | ApiError> => {
         try {
-            const response = await fetchWrapper.del(`/api/review/${id}`)
+            const response = await fetchWrapper.del(`/review/${id}`)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to delete review",
@@ -79,7 +76,7 @@ export const reviewAPI = {
     getByBookTitle: async (bookTitle: string): Promise<Review[] | ApiError> => {
         try {
             const response = await fetchWrapper.get(
-                `/api/reviews?bookTitle=${encodeURIComponent(bookTitle)}`
+                `/reviews?bookTitle=${encodeURIComponent(bookTitle)}`
             )
             if (response.error) {
                 return {

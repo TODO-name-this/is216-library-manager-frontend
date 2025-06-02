@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/AuthContext"
 export default function Header() {
     const pathname = usePathname()
     const { theme, toggleTheme } = useTheme()
-    const { user, isAuthenticated, logout } = useAuth()
+    const { user, isAuthenticated, logout, isLibrarian } = useAuth()
 
     return (
         <header className="bg-gray-900 border-b border-gray-700 py-4 shadow-lg light-mode:bg-white light-mode:border-gray-200">
@@ -41,26 +41,31 @@ export default function Header() {
                     >
                         Authors
                     </Link>
-                    <Link
-                        href="/reserved"
-                        className={`px-3 py-1 rounded-md transition-colors ${
-                            pathname.startsWith("/reserved")
-                                ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
-                                : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
-                        }`}
-                    >
-                        Reserved
-                    </Link>
-                    <Link
-                        href="/transactions"
-                        className={`px-3 py-1 rounded-md transition-colors ${
-                            pathname.startsWith("/transactions")
-                                ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
-                                : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
-                        }`}
-                    >
-                        Transactions
-                    </Link>
+                    {/* Show Reserved and Transactions only to authenticated users */}
+                    {isAuthenticated && (
+                        <>
+                            <Link
+                                href="/reserved"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/reserved")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Reserved
+                            </Link>
+                            <Link
+                                href="/transactions"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/transactions")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Transactions
+                            </Link>
+                        </>
+                    )}
                     <Link
                         href="/qanda"
                         className={`px-3 py-1 rounded-md transition-colors ${
@@ -112,8 +117,9 @@ export default function Header() {
 
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-4">
+                            {" "}
                             <span className="text-gray-300 light-mode:text-gray-600">
-                                Welcome, {user?.name || user?.username}
+                                Welcome, {user?.name || user?.cccd}
                             </span>
                             <button
                                 onClick={logout}

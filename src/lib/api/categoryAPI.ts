@@ -10,7 +10,7 @@ export const categoryAPI = {
     // Get all categories
     getCategories: async (): Promise<ApiResponse<Category[]>> => {
         try {
-            const response = await fetchWrapper.get("/api/category")
+            const response = await fetchWrapper.get("/category")
             return { data: response }
         } catch (error: any) {
             return {
@@ -37,7 +37,7 @@ export const categoryAPI = {
     ): Promise<ApiResponse<Category>> => {
         try {
             const response = await fetchWrapper.post(
-                "/api/category",
+                "/category",
                 categoryData
             )
             return { data: response }
@@ -78,3 +78,4 @@ export const categoryAPI = {
         }
     },
 }
+

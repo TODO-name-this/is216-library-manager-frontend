@@ -1,60 +1,67 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
-    const [username, setUsername] = useState("")
+    const [cccd, setCccd] = useState("")
     const [password, setPassword] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState("")
 
-    const { login } = useAuth()
+    const { login, isAuthenticated, isLoading } = useAuth()
     const router = useRouter()
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            router.push("/")
+        }
+    }, [isAuthenticated, isLoading, router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
+        setIsSubmitting(true)
         setError("")
 
         try {
-            const success = await login(username, password)
+            const success = await login(cccd, password)
             if (success) {
                 router.push("/") // Redirect to home page after successful login
             } else {
-                setError("Invalid username or password")
+                setError("Invalid CCCD or password")
             }
         } catch (error) {
             setError("Login failed. Please try again.")
         } finally {
-            setIsLoading(false)
+            setIsSubmitting(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
                         Sign in to Library Manager
                     </h2>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
-                            <label htmlFor="username" className="sr-only">
-                                Username
+                            <label htmlFor="cccd" className="sr-only">
+                                CCCD
                             </label>
                             <input
-                                id="username"
-                                name="username"
+                                id="cccd"
+                                name="cccd"
                                 type="text"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="CCCD (Citizen ID)"
+                                value={cccd}
+                                onChange={(e) => setCccd(e.target.value)}
                             />
                         </div>
                         <div>
@@ -66,7 +73,7 @@ export default function LoginPage() {
                                 name="password"
                                 type="password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -75,7 +82,7 @@ export default function LoginPage() {
                     </div>
 
                     {error && (
-                        <div className="text-red-600 text-sm text-center">
+                        <div className="text-red-400 text-sm text-center">
                             {error}
                         </div>
                     )}
@@ -83,10 +90,10 @@ export default function LoginPage() {
                     <div>
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isSubmitting}
                             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? "Signing in..." : "Sign in"}
+                            {isSubmitting ? "Signing in..." : "Sign in"}
                         </button>
                     </div>
                 </form>

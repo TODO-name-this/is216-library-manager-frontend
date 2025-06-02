@@ -14,10 +14,13 @@ import {
 } from "lucide-react"
 import { BookTitle, Review } from "@/lib/api/types"
 import { getBookById } from "@/app/actions/bookActions"
+import { createReservation } from "@/app/actions/reservationActions"
+import { useAuth } from "@/lib/AuthContext"
 
 export default function BookDetailsPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const { user, isAdmin, isLibrarian } = useAuth()
 
     const [book, setBook] = useState<BookTitle | null>(null)
     const [reviews, setReviews] = useState<Review[]>([])
@@ -25,12 +28,13 @@ export default function BookDetailsPage() {
     const [error, setError] = useState<string | null>(null)
     const [newRating, setNewRating] = useState(0)
     const [newComment, setNewComment] = useState("")
+    const [reserving, setReserving] = useState(false)
 
     useEffect(() => {
         const fetchBookData = async () => {
             try {
                 setLoading(true)
-                setError(null)                // Fetch book title details (which includes reviews)
+                setError(null) // Fetch book title details (which includes reviews)
                 const bookData = await getBookById(id)
                 if (!bookData) {
                     throw new Error("Book not found")
@@ -54,6 +58,54 @@ export default function BookDetailsPage() {
             fetchBookData()
         }
     }, [id])
+
+    const handleReservation = async () => {
+        if (!user || !book) return
+
+        // Check if user can make more reservations
+        const currentReservations = book.userReservationsForThisBook || 0
+        const maxReservations = book.maxUserReservations || 0
+
+        if (currentReservations >= maxReservations) {
+            alert(
+                `You have reached the maximum number of reservations (${maxReservations}) for this book.`
+            )
+            return
+        }
+
+        // Check if there are available slots
+        const onlineReservations = book.onlineReservations || 0
+        const maxOnlineReservations = book.maxOnlineReservations || 0
+
+        if (onlineReservations >= maxOnlineReservations) {
+            alert("No online reservation slots available for this book.")
+            return
+        }
+
+        try {
+            setReserving(true)
+
+            const reservationData = {
+                bookTitleId: book.id,
+                bookCopyId: "", // Will be assigned by backend
+            }
+
+            const result = await createReservation(reservationData)
+
+            if (result) {
+                alert("Book reserved successfully!")
+                // Refresh the book data to get updated reservation counts
+                window.location.reload()
+            } else {
+                alert("Failed to reserve book. Please try again.")
+            }
+        } catch (error) {
+            console.error("Error reserving book:", error)
+            alert("An error occurred while reserving the book.")
+        } finally {
+            setReserving(false)
+        }
+    }
 
     const calculateAverageRating = () => {
         if (reviews.length === 0) return 0
@@ -162,8 +214,9 @@ export default function BookDetailsPage() {
                     </div>
                 </div>
             </div>
-        )    }
-    const averageRating = calculateAverageRating();
+        )
+    }
+    const averageRating = calculateAverageRating()
 
     return (
         <main className="min-h-screen p-6 bg-gray-900 text-white">
@@ -203,37 +256,55 @@ export default function BookDetailsPage() {
                                     <div className="h-96 w-78 rounded shadow-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center">
                                         <Book className="w-20 h-20 text-gray-400" />
                                     </div>
-                                )}
+                                )}{" "}
                                 <div className="flex space-x-3">
-                                    <Link
-                                        href={`/books/edit/${book.id}`}
-                                        className="py-2 px-4 bg-blue-500 hover:bg-blue-600 rounded font-medium w-fit"
-                                    >
-                                        Edit
-                                    </Link>
-                                    <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium">
-                                        Delete
-                                    </button>
+                                    {(isAdmin() || isLibrarian()) && (
+                                        <>
+                                            <Link
+                                                href={`/books/edit/${book.id}`}
+                                                className="py-2 px-4 bg-blue-500 hover:bg-blue-600 rounded font-medium w-fit"
+                                            >
+                                                Edit
+                                            </Link>
+                                            <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium">
+                                                Delete
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex flex-col justify-center space-y-4">
-                                <h2 className="text-3xl font-bold">{book.title}</h2>                                <p>
+                                <h2 className="text-3xl font-bold">
+                                    {book.title}
+                                </h2>{" "}
+                                <p>
                                     <strong>Author:</strong>{" "}
                                     <span className="text-blue-400">
-                                        {book.authorNames && book.authorNames.length > 0 && book.authorIds && book.authorIds.length > 0
-                                            ? book.authorNames.map((authorName, index) => (
-                                                <span key={index}>
-                                                    <Link 
-                                                        href={`/authors/details/${book.authorIds![index]}`}
-                                                        className="hover:text-blue-300 underline"
-                                                    >
-                                                        {authorName}
-                                                    </Link>
-                                                    {index < book.authorNames.length - 1 && ", "}
-                                                </span>
-                                            ))
-                                            : "Unknown"
-                                        }
+                                        {book.authorNames &&
+                                        book.authorNames.length > 0 &&
+                                        book.authorIds &&
+                                        book.authorIds.length > 0
+                                            ? book.authorNames.map(
+                                                  (authorName, index) => (
+                                                      <span key={index}>
+                                                          <Link
+                                                              href={`/authors/details/${
+                                                                  book.authorIds![
+                                                                      index
+                                                                  ]
+                                                              }`}
+                                                              className="hover:text-blue-300 underline"
+                                                          >
+                                                              {authorName}
+                                                          </Link>
+                                                          {index <
+                                                              book.authorNames
+                                                                  .length -
+                                                                  1 && ", "}
+                                                      </span>
+                                                  )
+                                              )
+                                            : "Unknown"}
                                     </span>
                                 </p>
                                 <p>
@@ -277,7 +348,8 @@ export default function BookDetailsPage() {
                                 </div>
                             </div>
                         </div>
-                    </div>                    {/* Sidebar - Availability Status block */}
+                    </div>{" "}
+                    {/* Sidebar - Availability Status block */}
                     <aside className="space-y-6">
                         <div className="p-6 bg-gray-800 rounded-lg shadow">
                             <p className="text-sm text-gray-400 mb-2">
@@ -290,33 +362,69 @@ export default function BookDetailsPage() {
                             <div className="mt-2 flex justify-between text-sm text-gray-300">
                                 <span>Book Information</span>
                             </div>
-                            <hr className="my-4 border-gray-700" />                            <div className="space-y-2 text-sm text-gray-300">
+                            <hr className="my-4 border-gray-700" />{" "}
+                            <div className="space-y-2 text-sm text-gray-300">
                                 <div className="flex justify-between">
                                     <span>Total copies:</span>
                                     <span className="text-white font-medium">
-                                        {book.canBorrow ? "15" : "15"} available
+                                        {book.totalCopies || 0} total (
+                                        {book.availableCopies || 0} available)
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Online reservations:</span>
                                     <span className="text-white font-medium">
-                                        {book.canBorrow ? "3" : "0"} of 5 slots
+                                        {book.onlineReservations || 0} of{" "}
+                                        {book.maxOnlineReservations || 0} slots
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Your reservations:</span>
                                     <span className="text-yellow-400 font-medium">
-                                        2 of 5 max
+                                        {book.userReservationsForThisBook || 0}{" "}
+                                        of {book.maxUserReservations || 0} max
                                     </span>
                                 </div>
-                            </div>                            <button className="w-full py-2 mt-4 rounded-lg font-medium transition bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed">
-                                {book.canBorrow ? "Reserve Book" : "Join Waitlist"}
-                            </button>
+                            </div>{" "}
+                            {!user ? (
+                                <button
+                                    onClick={() => router.push("/login")}
+                                    className="w-full py-2 mt-4 rounded-lg font-medium transition bg-blue-600 hover:bg-blue-500"
+                                >
+                                    Login to Reserve
+                                </button>
+                            ) : isAdmin() || isLibrarian() ? (
+                                <div className="w-full py-2 mt-4 rounded-lg font-medium bg-gray-600 text-center text-gray-300">
+                                    Staff View - Users Can Reserve
+                                </div>
+                            ) : (book?.userReservationsForThisBook || 0) > 0 ? (
+                                <div className="w-full py-2 mt-4 rounded-lg font-medium bg-gray-600 text-center text-gray-300">
+                                    Already Reserved
+                                </div>
+                            ) : (book?.userReservationsForThisBook || 0) >=
+                              (book?.maxUserReservations || 0) ? (
+                                <div className="w-full py-2 mt-4 rounded-lg font-medium bg-gray-600 text-center text-gray-300">
+                                    Max Reservations Reached
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleReservation}
+                                    disabled={!book?.canBorrow || reserving}
+                                    className="w-full py-2 mt-4 rounded-lg font-medium transition bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                                >
+                                    {reserving
+                                        ? "Reserving..."
+                                        : book?.canBorrow
+                                        ? "Reserve Book"
+                                        : "Join Waitlist"}
+                                </button>
+                            )}
                             <p className="mt-4 text-sm text-gray-400">
                                 Contact library for availability
                             </p>
                             <p className="mt-2 text-xs text-gray-500">
-                                Book details may change until reservation is complete.
+                                Book details may change until reservation is
+                                complete.
                             </p>
                         </div>
                     </aside>
@@ -328,10 +436,12 @@ export default function BookDetailsPage() {
                         <MessageSquare className="w-6 h-6 mr-2" />
                         Reviews ({reviews.length || 0})
                     </h3>
-                    
+
                     {/* Add review form */}
                     <div className="bg-gray-800 rounded-lg p-6 mb-6">
-                        <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
+                        <h4 className="text-lg font-semibold mb-4">
+                            Write a Review
+                        </h4>
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-300 mb-2">
                                 Your Rating:
@@ -348,7 +458,11 @@ export default function BookDetailsPage() {
                                     </button>
                                 ))}
                                 <span className="ml-2 text-sm text-gray-400">
-                                    {newRating > 0 ? `${newRating} star${newRating > 1 ? 's' : ''}` : 'No rating'}
+                                    {newRating > 0
+                                        ? `${newRating} star${
+                                              newRating > 1 ? "s" : ""
+                                          }`
+                                        : "No rating"}
                                 </span>
                             </div>
                         </div>
@@ -360,7 +474,7 @@ export default function BookDetailsPage() {
                             placeholder="Share your thoughts about this book..."
                         />
                         <div className="flex justify-end mt-4">
-                            <button 
+                            <button
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                                 disabled={!newComment.trim() || newRating === 0}
                             >
@@ -390,7 +504,9 @@ export default function BookDetailsPage() {
                                                 </h5>
                                                 <div className="flex items-center space-x-2">
                                                     <div className="flex">
-                                                        {renderStars(review.star)}
+                                                        {renderStars(
+                                                            review.star
+                                                        )}
                                                     </div>
                                                     <span className="text-sm text-gray-400">
                                                         {new Date().toLocaleDateString()}
@@ -408,7 +524,8 @@ export default function BookDetailsPage() {
                             <div className="bg-gray-800 rounded-lg p-8 text-center">
                                 <MessageSquare className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                                 <p className="text-gray-400 text-lg">
-                                    No reviews yet. Be the first to review this book!
+                                    No reviews yet. Be the first to review this
+                                    book!
                                 </p>
                             </div>
                         )}

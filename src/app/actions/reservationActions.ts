@@ -9,7 +9,7 @@ import type {
 
 export async function getAllReservations(): Promise<Reservation[]> {
     try {
-        const response = await reservationAPI.getReservations()
+        const response = await reservationAPI.getAll()
         if ("error" in response) {
             console.error("Failed to fetch reservations:", response.error)
             return []
@@ -124,6 +124,20 @@ export async function deleteReservation(id: number): Promise<boolean> {
         return true
     } catch (error) {
         console.error("Error deleting reservation:", error)
+        throw error
+    }
+}
+
+export async function getMyReservations(): Promise<Reservation[]> {
+    try {
+        const response = await reservationAPI.getMy()
+        if ("error" in response) {
+            console.error("Failed to fetch your reservations:", response.error)
+            return []
+        }
+        return response
+    } catch (error) {
+        console.error("Error fetching your reservations:", error)
         throw error
     }
 }

@@ -1,8 +1,8 @@
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 // Get JWT token from localStorage
 function getAuthHeaders(): Record<string, string> {
-    const token = localStorage.getItem("jwt_token")
+    const token = localStorage.getItem("access_token")
     if (token) {
         return {
             Authorization: `Bearer ${token}`,
@@ -98,11 +98,34 @@ async function handleResponse(response: Response) {
     if (response.ok) {
         return data || response.statusText
     } else {
+        // Handle 401 Unauthorized errors only for authenticated requests
+        if (response.status === 401) {
+            // Check if this was an authenticated request by looking at the URL
+            // Only redirect for protected endpoints, not public ones like book listings
+            const url = response.url
+            const isPublicEndpoint =
+                url.includes("/bookTitle/names") ||
+                url.includes("/bookTitle/with-names") ||
+                url.includes("/auth/login")
+
+            if (!isPublicEndpoint) {
+                // Clear stored authentication data
+                localStorage.removeItem("access_token")
+                localStorage.removeItem("user_info")
+
+                // Redirect to login page if we're in the browser
+                if (typeof window !== "undefined") {
+                    window.location.href = "/login"
+                }
+            }
+        }
+
         const error = {
             status: response.status,
             message: typeof data === "string" ? data : response.statusText,
         }
-        return { error }
+        console.error("Fetch error:", error)
+        throw new Error(`HTTP ${response.status}: ${error.message}`)
     }
 }
 
@@ -113,6 +136,3 @@ export const fetchWrapper = {
     del,
     patch,
 }
-
-// Default export for easier importing
-export default fetchWrapper

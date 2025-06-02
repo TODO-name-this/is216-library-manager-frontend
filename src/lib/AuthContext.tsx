@@ -10,20 +10,22 @@ import React, {
 import { authAPI } from "@/lib/api"
 
 interface User {
-    id: number
-    username: string
-    email: string
-    role: string
+    id: string
+    cccd: string
     name: string
+    role: "ADMIN" | "LIBRARIAN" | "USER"
 }
 
 interface AuthContextType {
     user: User | null
     isAuthenticated: boolean
     isLoading: boolean
-    login: (username: string, password: string) => Promise<boolean>
+    login: (cccd: string, password: string) => Promise<boolean>
     logout: () => void
     checkAuthStatus: () => Promise<void>
+    hasRole: (role: string | string[]) => boolean
+    isAdmin: () => boolean
+    isLibrarian: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -37,22 +39,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuthStatus = async () => {
         setIsLoading(true)
         try {
-            const token = localStorage.getItem("jwt_token")
-            if (!token) {
+            if (!authAPI.isAuthenticated()) {
                 setUser(null)
                 return
             }
 
-            // Test if token is still valid by making a test call
-            const response = await authAPI.testAuth()
-            if (typeof response !== "string" && "data" in response) {
-                // You would typically decode the JWT token to get user info
-                // For now, we'll store user info in localStorage when logging in
-                const userInfo = localStorage.getItem("user_info")
-                if (userInfo) {
-                    setUser(JSON.parse(userInfo))
-                }
+            // Get user info from localStorage or decode from token
+            const userInfo = localStorage.getItem("user_info")
+            const currentUser = authAPI.getCurrentUser()
+
+            if (userInfo && currentUser) {
+                const parsedUser = JSON.parse(userInfo)
+                setUser({
+                    id: currentUser.sub,
+                    cccd: parsedUser.cccd,
+                    name: parsedUser.name,
+                    role: currentUser.role,
+                })
             } else {
+                // Token invalid or expired
                 authAPI.logout()
                 setUser(null)
             }
@@ -68,18 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = async (cccd: string, password: string): Promise<boolean> => {
         try {
             const response = await authAPI.login({ cccd, password })
-            if (typeof response === "string") {
-                // Handle token directly
-                localStorage.setItem("jwt_token", response)
-                const userInfo = {
-                    id: 1, // Replace with actual user ID from decoded token
-                    username: cccd,
-                    email: `${cccd}@example.com`,
-                    role: "USER",
-                    name: cccd,
-                }
-                localStorage.setItem("user_info", JSON.stringify(userInfo))
-                setUser(userInfo)
+            if (typeof response !== "string" && "accessToken" in response) {
+                // Successfully logged in, check auth status to update user state
+                await checkAuthStatus()
                 return true
             }
             return false
@@ -94,6 +90,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
     }
 
+    // Role checking utilities
+    const hasRole = (role: string | string[]): boolean => {
+        if (!user) return false
+        if (Array.isArray(role)) {
+            return role.includes(user.role)
+        }
+        return user.role === role
+    }
+
+    const isAdmin = (): boolean => {
+        return hasRole("ADMIN")
+    }
+
+    const isLibrarian = (): boolean => {
+        return hasRole(["ADMIN", "LIBRARIAN"])
+    }
+
     useEffect(() => {
         checkAuthStatus()
     }, [])
@@ -105,6 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         checkAuthStatus,
+        hasRole,
+        isAdmin,
+        isLibrarian,
     }
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

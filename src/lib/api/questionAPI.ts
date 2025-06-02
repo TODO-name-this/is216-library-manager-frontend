@@ -10,7 +10,7 @@ export const questionAPI = {
     // Get all questions
     getQuestions: async (): Promise<ApiResponse<Question[]>> => {
         try {
-            const response = await fetchWrapper.get("/api/question")
+            const response = await fetchWrapper.get("/question")
             return { data: response }
         } catch (error: any) {
             return {
@@ -37,7 +37,7 @@ export const questionAPI = {
     ): Promise<ApiResponse<Question>> => {
         try {
             const response = await fetchWrapper.post(
-                "/api/question",
+                "/question",
                 questionData
             )
             return { data: response }
@@ -78,3 +78,4 @@ export const questionAPI = {
         }
     },
 }
+

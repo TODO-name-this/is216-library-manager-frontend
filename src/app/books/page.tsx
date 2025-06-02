@@ -4,50 +4,76 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { BookTitle } from "@/lib/api/types"
 import { getAllBooks } from "@/app/actions/bookActions"
+import { useAuth } from "@/lib/AuthContext"
 
 export default function BooksPage() {
+    const { user, isAdmin, isLibrarian } = useAuth()
+
     // State for books data
     const [books, setBooks] = useState<BookTitle[]>([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null) // State quản lý chức năng tìm kiếm, lọc và sắp xếp
+    const [error, setError] = useState<string | null>(null)
+
+    // State quản lý chức năng tìm kiếm, lọc và sắp xếp
     const [searchTerm, setSearchTerm] = useState("")
     const [filterStatus, setFilterStatus] = useState("All")
-    const [sortBy, setSortBy] = useState("title")
-
-    // Load books from API
+    const [sortBy, setSortBy] = useState("title") // Load books from API
     useEffect(() => {
         const fetchBooks = async () => {
             try {
                 setLoading(true)
                 setError(null)
                 const booksData = await getAllBooks()
-                setBooks(booksData)
+                console.log(
+                    "Books page received:",
+                    booksData,
+                    "Type:",
+                    typeof booksData,
+                    "Is array?",
+                    Array.isArray(booksData)
+                ) // getAllBooks now always returns an array (empty array on error)
+                if (Array.isArray(booksData)) {
+                    setBooks(booksData)
+                    if (booksData.length === 0) {
+                        setError("No books found in the library")
+                    }
+                } else {
+                    console.warn("Unexpected data format:", booksData)
+                    setBooks([])
+                    setError("Unexpected data format received from server")
+                }
             } catch (err) {
-                setError(
+                console.error("Books page error:", err)
+                const errorMessage =
                     err instanceof Error ? err.message : "Failed to load books"
-                )
+
+                // Show the actual error without authentication suggestions for book listing
+                setError(errorMessage)
+                setBooks([]) // Ensure books is always an array
             } finally {
                 setLoading(false)
             }
         }
 
         fetchBooks()
-    }, [])
-
-    // Lọc dữ liệu theo từ khóa và trạng thái
-    const filteredBooks = books.filter((book) => {
-        const authorNames = (book.authorNames || []).join(" ")
-        const categoryNames = (book.categoryNames || []).join(" ")
-        const searchMatch =
-            book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            authorNames.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            categoryNames.toLowerCase().includes(searchTerm.toLowerCase())
-        const statusMatch =
-            filterStatus === "All" ||
-            (filterStatus === "Available" && book.canBorrow) ||
-            (filterStatus === "Unavailable" && !book.canBorrow)
-        return searchMatch && statusMatch
-    })
+    }, []) // Lọc dữ liệu theo từ khóa và trạng thái
+    const filteredBooks = Array.isArray(books)
+        ? books.filter((book) => {
+              const authorNames = (book.authorNames || []).join(" ")
+              const categoryNames = (book.categoryNames || []).join(" ")
+              const searchMatch =
+                  book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  authorNames
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase()) ||
+                  categoryNames.toLowerCase().includes(searchTerm.toLowerCase())
+              const statusMatch =
+                  filterStatus === "All" ||
+                  (filterStatus === "Available" && book.canBorrow) ||
+                  (filterStatus === "Unavailable" && !book.canBorrow)
+              return searchMatch && statusMatch
+          })
+        : []
 
     // Sắp xếp sách theo tiêu chí được chọn
     const sortedBooks = [...filteredBooks].sort((a, b) => {
@@ -72,7 +98,7 @@ export default function BooksPage() {
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
-            )}
+            )}{" "}
             {/* Error State */}
             {error && (
                 <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded mb-6">
@@ -112,12 +138,36 @@ export default function BooksPage() {
                                 Sort by Publication Date
                             </option>
                         </select>
-                    </div>
-
+                    </div>{" "}
                     {/* Books count */}
-                    <p className="mb-4 text-gray-400">
-                        Showing {sortedBooks.length} of {books.length} books
-                    </p>
+                    <div className="flex justify-between items-center mb-4">
+                        <p className="text-gray-400">
+                            Showing {sortedBooks.length} of {books.length} books
+                        </p>
+
+                        {/* Add Book Button for Admin/Librarian */}
+                        {(isAdmin() || isLibrarian()) && (
+                            <Link
+                                href="/books/add"
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                            >
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 4v16m8-8H4"
+                                    />
+                                </svg>
+                                Add New Book
+                            </Link>
+                        )}
+                    </div>
                 </>
             )}{" "}
             {/* Hiển thị danh sách sách */}
@@ -296,14 +346,16 @@ export default function BooksPage() {
                         ))
                     )}
                 </div>
-            )}
+            )}{" "}
             {/* add book button */}
-            <Link
-                href="/books/add"
-                className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all"
-            >
-                <span className="text-2xl leading-none">+</span>
-            </Link>
+            {(isAdmin() || isLibrarian()) && (
+                <Link
+                    href="/books/add"
+                    className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all z-50"
+                >
+                    <span className="text-2xl leading-none">+</span>
+                </Link>
+            )}
         </main>
     )
 }

@@ -7,10 +7,10 @@ import type {
 } from "./types"
 
 export const reservationAPI = {
-    // Get all reservations (ADMIN, LIBRARIAN)
-    getReservations: async (): Promise<Reservation[] | ApiError> => {
+    // Get all reservations (ADMIN, LIBRARIAN only)
+    getAll: async (): Promise<Reservation[] | ApiError> => {
         try {
-            const response = await fetchWrapper.get("/api/reservation")
+            const response = await fetchWrapper.get("/reservation")
             if (response.error) {
                 return {
                     error:
@@ -22,12 +22,25 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while fetching reservations" }
         }
-    },
-
-    // Get reservation by ID (ADMIN, LIBRARIAN, USER)
+    }, // Get current user's reservations (authenticated users)
+    getMy: async (): Promise<Reservation[] | ApiError> => {
+        try {
+            const response = await fetchWrapper.get("/reservation/my")
+            if (response.error) {
+                return {
+                    error:
+                        response.error.message ||
+                        "Failed to fetch your reservations",
+                }
+            }
+            return response
+        } catch (error) {
+            return { error: "Network error while fetching your reservations" }
+        }
+    }, // Get reservation by ID (ADMIN, LIBRARIAN, USER)
     getById: async (id: string): Promise<Reservation | ApiError> => {
         try {
-            const response = await fetchWrapper.get(`/api/reservation/${id}`)
+            const response = await fetchWrapper.get(`/reservation/${id}`)
             if (response.error) {
                 return {
                     error:
@@ -43,7 +56,7 @@ export const reservationAPI = {
     // Get reservation by ID (ADMIN, LIBRARIAN, USER) - alias for consistency
     getReservationById: async (id: string): Promise<Reservation | ApiError> => {
         try {
-            const response = await fetchWrapper.get(`/api/reservation/${id}`)
+            const response = await fetchWrapper.get(`/reservation/${id}`)
             if (response.error) {
                 return {
                     error:
@@ -62,7 +75,7 @@ export const reservationAPI = {
     ): Promise<Reservation[] | ApiError> => {
         try {
             const response = await fetchWrapper.get(
-                `/api/reservation/user/${userId}`
+                `/reservation/user/${userId}`
             )
             if (response.error) {
                 return {
@@ -83,7 +96,7 @@ export const reservationAPI = {
     ): Promise<Reservation[] | ApiError> => {
         try {
             const response = await fetchWrapper.get(
-                `/api/reservation/bookCopy/${bookCopyId}`
+                `/reservation/bookCopy/${bookCopyId}`
             )
             if (response.error) {
                 return {
@@ -106,7 +119,7 @@ export const reservationAPI = {
     ): Promise<Reservation | ApiError> => {
         try {
             const response = await fetchWrapper.post(
-                "/api/reservation",
+                "/reservation",
                 reservationData
             )
             if (response.error) {
@@ -128,7 +141,7 @@ export const reservationAPI = {
     ): Promise<Reservation | ApiError> => {
         try {
             const response = await fetchWrapper.post(
-                "/api/reservation",
+                "/reservation",
                 reservationData
             )
             if (response.error) {
@@ -142,15 +155,14 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while creating reservation" }
         }
-    },
-    // Update reservation (ADMIN, LIBRARIAN, USER)
+    }, // Update reservation (ADMIN, LIBRARIAN, USER)
     update: async (
         id: string,
         reservationData: UpdateReservationRequest
     ): Promise<Reservation | ApiError> => {
         try {
             const response = await fetchWrapper.put(
-                `/api/reservation/${id}`,
+                `/reservation/${id}`,
                 reservationData
             )
             if (response.error) {
@@ -164,16 +176,14 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while updating reservation" }
         }
-    },
-
-    // Update reservation (ADMIN, LIBRARIAN, USER) - alias for consistency
+    }, // Update reservation (ADMIN, LIBRARIAN, USER) - alias for consistency
     updateReservation: async (
         id: string,
         reservationData: UpdateReservationRequest
     ): Promise<Reservation | ApiError> => {
         try {
             const response = await fetchWrapper.put(
-                `/api/reservation/${id}`,
+                `/reservation/${id}`,
                 reservationData
             )
             if (response.error) {
@@ -187,18 +197,15 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while updating reservation" }
         }
-    },
-
-    // Update reservation status (ADMIN, LIBRARIAN)
+    }, // Update reservation status (ADMIN, LIBRARIAN)
     updateReservationStatus: async (
         id: string,
         status: string
     ): Promise<Reservation | ApiError> => {
         try {
-            const response = await fetchWrapper.patch(
-                `/api/reservation/${id}`,
-                { status }
-            )
+            const response = await fetchWrapper.patch(`/reservation/${id}`, {
+                status,
+            })
             if (response.error) {
                 return {
                     error:
@@ -219,7 +226,7 @@ export const reservationAPI = {
     ): Promise<Reservation | ApiError> => {
         try {
             const response = await fetchWrapper.patch(
-                `/api/reservation/${id}`,
+                `/reservation/${id}`,
                 reservationData
             )
             if (response.error) {
@@ -233,12 +240,10 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while updating reservation" }
         }
-    },
-
-    // Delete reservation (ADMIN, LIBRARIAN)
+    }, // Delete reservation (ADMIN, LIBRARIAN)
     delete: async (id: string): Promise<string | ApiError> => {
         try {
-            const response = await fetchWrapper.del(`/api/reservation/${id}`)
+            const response = await fetchWrapper.del(`/reservation/${id}`)
             if (response.error) {
                 return {
                     error:
@@ -250,12 +255,10 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while deleting reservation" }
         }
-    },
-
-    // Delete reservation (ADMIN, LIBRARIAN) - alias for consistency
+    }, // Delete reservation (ADMIN, LIBRARIAN) - alias for consistency
     deleteReservation: async (id: string): Promise<string | ApiError> => {
         try {
-            const response = await fetchWrapper.del(`/api/reservation/${id}`)
+            const response = await fetchWrapper.del(`/reservation/${id}`)
             if (response.error) {
                 return {
                     error:

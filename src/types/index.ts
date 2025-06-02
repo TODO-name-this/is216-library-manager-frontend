@@ -52,9 +52,16 @@ export interface Review {
 
 export interface Reservation {
     id: string
+    reservationDate: string
+    expirationDate: string
+    status: "PENDING" | "APPROVED" | "CANCELLED" | "COMPLETED"
+    deposit: number
+    bookTitleId: string
+    bookCopyId: string
     userId: string
-    bookId: string
-    status: "PENDING" | "APPROVED" | "CANCELLED"
+    bookTitle: string
+    bookImageUrl: string
+    bookAuthors: string[]
 }
 
 export interface Publisher {
@@ -73,10 +80,19 @@ export interface BookCopy {
     status: "AVAILABLE" | "BORROWED" | "RESERVED" | "DAMAGED"
 }
 
+export interface TransactionDetail {
+    transactionId: string
+    bookCopyId: string
+    returnedDate: string | null
+    penaltyFee: number
+}
+
 export interface Transaction {
     id: string
+    borrowDate: string
+    dueDate: string
     userId: string
-    status: "PENDING" | "COMPLETED" | "CANCELLED"
+    details: TransactionDetail[]
 }
 
 // Auth Types

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Question } from "@/types"
+import { Question } from "@/lib/api/types"
 import { useTheme } from "@/lib/ThemeContext"
 
 interface QuestionCardProps {

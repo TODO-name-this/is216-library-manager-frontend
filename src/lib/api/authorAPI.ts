@@ -10,7 +10,7 @@ export const authorAPI = {
     // Get all authors
     getAll: async (): Promise<Author[] | ApiError> => {
         try {
-            const response = await fetchWrapper.get("/api/author")
+            const response = await fetchWrapper.get("/author")
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to fetch authors",
@@ -20,12 +20,10 @@ export const authorAPI = {
         } catch (error) {
             return { error: "Network error while fetching authors" }
         }
-    },
-
-    // Get author by ID
+    }, // Get author by ID
     getById: async (id: string): Promise<Author | ApiError> => {
         try {
-            const response = await fetchWrapper.get(`/api/author/${id}`)
+            const response = await fetchWrapper.get(`/author/${id}`)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to fetch author",
@@ -42,7 +40,7 @@ export const authorAPI = {
         authorData: CreateAuthorRequest
     ): Promise<Author | ApiError> => {
         try {
-            const response = await fetchWrapper.post("/api/author", authorData)
+            const response = await fetchWrapper.post("/author", authorData)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to create author",
@@ -52,18 +50,13 @@ export const authorAPI = {
         } catch (error) {
             return { error: "Network error while creating author" }
         }
-    },
-
-    // Update author (ADMIN, LIBRARIAN)
+    }, // Update author (ADMIN, LIBRARIAN)
     update: async (
         id: string,
         authorData: UpdateAuthorRequest
     ): Promise<Author | ApiError> => {
         try {
-            const response = await fetchWrapper.put(
-                `/api/author/${id}`,
-                authorData
-            )
+            const response = await fetchWrapper.put(`/author/${id}`, authorData)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to update author",
@@ -77,7 +70,7 @@ export const authorAPI = {
     // Delete author (ADMIN, LIBRARIAN)
     delete: async (id: string): Promise<string | ApiError> => {
         try {
-            const response = await fetchWrapper.del(`/api/author/${id}`)
+            const response = await fetchWrapper.del(`/author/${id}`)
             if (response.error) {
                 return {
                     error: response.error.message || "Failed to delete author",

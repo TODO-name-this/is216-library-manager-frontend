@@ -10,7 +10,7 @@ export const bookTitleAPI = {
     // Get all book titles
     getBookTitles: async (): Promise<ApiResponse<BookTitle[]>> => {
         try {
-            const response = await fetchWrapper.get("/api/bookTitle/names")
+            const response = await fetchWrapper.get("/bookTitle/names", false) // false = no auth required
             return { data: response }
         } catch (error: any) {
             return {
@@ -19,24 +19,22 @@ export const bookTitleAPI = {
                 },
             }
         }
-    },    // Get book title by ID
+    }, // Get book title by ID
     getBookTitleById: async (id: string): Promise<ApiResponse<BookTitle>> => {
         try {
-            const response = await fetchWrapper.get(`/api/bookTitle/${id}`)
+            const response = await fetchWrapper.get(`/bookTitle/${id}`)
             return { data: response }
         } catch (error: any) {
             return {
                 error: { error: error.message || "Failed to fetch book title" },
             }
         }
-    },
-
-    // Create new book title
+    }, // Create new book title
     createBookTitle: async (
         bookData: CreateBookTitleRequest
     ): Promise<ApiResponse<BookTitle>> => {
         try {
-            const response = await fetchWrapper.post("/api/bookTitle", bookData)
+            const response = await fetchWrapper.post("/bookTitle", bookData)
             return { data: response }
         } catch (error: any) {
             return {
@@ -45,14 +43,16 @@ export const bookTitleAPI = {
                 },
             }
         }
-    },    // Update book title
+    },
+
+    // Update book title
     updateBookTitle: async (
         id: string,
         bookData: UpdateBookTitleRequest
     ): Promise<ApiResponse<BookTitle>> => {
         try {
             const response = await fetchWrapper.put(
-                `/api/bookTitle/${id}`,
+                `/bookTitle/${id}`,
                 bookData
             )
             return { data: response }
@@ -68,7 +68,7 @@ export const bookTitleAPI = {
     // Delete book title
     deleteBookTitle: async (id: string): Promise<ApiResponse<void>> => {
         try {
-            await fetchWrapper.del(`/api/bookTitle/${id}`)
+            await fetchWrapper.del(`/bookTitle/${id}`)
             return { data: undefined }
         } catch (error: any) {
             return {

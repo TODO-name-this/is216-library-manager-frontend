@@ -10,6 +10,21 @@ export interface Page {
     number: number
 }
 
+export interface User {
+    id: string
+    cccd: string
+    name: string
+    password: string
+    role: "ADMIN" | "LIBRARIAN" | "USER"
+}
+
+export interface BookTitle {
+    id: string
+    title: string
+    author: string
+    publisher: string
+}
+
 export interface Book {
     id: string
     imageUrl: string
@@ -21,33 +36,77 @@ export interface Book {
 
 export interface Author {
     id: string
-    avatarUrl: string | null
     name: string
-    birthday: Date
-    biography: string
+    avatarUrl?: string | null
+    birthday?: Date
+    biography?: string
 }
 
 export interface Review {
     id: string
-    date: string
-    title: string
-    comment: string | null
-    score: number
-    bookId: string
     userId: string
-    user: User
+    bookId: string
+    rating: number
+    comment: string
 }
 
-export interface User {
-    avatarUrl: any
+export interface Reservation {
+    id: string
+    reservationDate: string
+    expirationDate: string
+    status: "PENDING" | "APPROVED" | "CANCELLED" | "COMPLETED"
+    deposit: number
+    bookTitleId: string
+    bookCopyId: string
+    userId: string
+    bookTitle: string
+    bookImageUrl: string
+    bookAuthors: string[]
+}
+
+export interface Publisher {
+    id: string
     name: string
-    email: string
-    role: string
 }
 
 export interface Category {
+    id: string
     name: string
-    description: string
+}
+
+export interface BookCopy {
+    id: string
+    bookTitleId: string
+    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "DAMAGED"
+}
+
+export interface TransactionDetail {
+    transactionId: string
+    bookCopyId: string
+    returnedDate: string | null
+    penaltyFee: number
+}
+
+export interface Transaction {
+    id: string
+    borrowDate: string
+    dueDate: string
+    userId: string
+    details: TransactionDetail[]
+}
+
+// Auth Types
+export interface LoginRequest {
+    cccd: string
+    password: string
+}
+
+export interface LoginResponse {
+    token: string
+}
+
+export interface ApiError {
+    error: string
 }
 
 export interface Question {

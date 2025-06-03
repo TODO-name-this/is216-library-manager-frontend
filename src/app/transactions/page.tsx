@@ -75,7 +75,7 @@ function TransactionsPageContent() {
         }
 
         loadTransactions()
-    }, [isStaff])    // Filter transactions based on search
+    }, [isStaff]) // Filter transactions based on search
     const filteredTransactions = transactions.filter((item) => {
         const matchesSearch = isStaff
             ? item.user?.name
@@ -112,9 +112,11 @@ function TransactionsPageContent() {
 
     return (
         <main className="p-6 bg-gray-900 text-white min-h-screen">
+            {" "}
             <h1 className="text-3xl font-bold mb-6">
                 {isStaff ? "All Transactions" : "My Transactions"}
-            </h1>            {/* Search Controls */}
+            </h1>
+            {/* Search Controls */}
             <div className="mb-6">
                 <input
                     type="text"
@@ -127,12 +129,12 @@ function TransactionsPageContent() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
-            </div>
-
+            </div>{" "}
             {/* Transactions Table */}
             <div className="overflow-x-auto bg-gray-900 rounded">
                 <table className="w-full text-left text-white bg-gray-800 rounded-xl overflow-hidden shadow-lg mb-4">
-                    <thead className="bg-gray-700">                        <tr>
+                    <thead className="bg-gray-700">
+                        <tr>
                             <th className="px-4 py-3">Transaction ID</th>
                             {isStaff && <th className="px-4 py-3">User</th>}
                             {isStaff && <th className="px-4 py-3">CCCD</th>}
@@ -148,6 +150,7 @@ function TransactionsPageContent() {
                                     key={item.transaction.id}
                                     className="border-t border-gray-700 hover:bg-gray-750"
                                 >
+                                    {" "}
                                     <td className="px-4 py-3 text-blue-300 font-mono">
                                         {item.transaction.id}
                                     </td>
@@ -155,16 +158,21 @@ function TransactionsPageContent() {
                                         <td className="px-4 py-3 text-gray-300">
                                             {item.user?.name || "Unknown User"}
                                         </td>
-                                    )}                                    {isStaff && (
+                                    )}
+                                    {isStaff && (
                                         <td className="px-4 py-3 text-gray-400 font-mono">
                                             {item.user?.cccd || "N/A"}
                                         </td>
                                     )}
                                     <td className="px-4 py-3 text-gray-300">
-                                        {new Date(item.transaction.borrowDate).toLocaleDateString()}
+                                        {new Date(
+                                            item.transaction.borrowDate
+                                        ).toLocaleDateString()}
                                     </td>
                                     <td className="px-4 py-3 text-gray-300">
-                                        {new Date(item.transaction.dueDate).toLocaleDateString()}
+                                        {new Date(
+                                            item.transaction.dueDate
+                                        ).toLocaleDateString()}
                                     </td>
                                     <td className="px-4 py-3">
                                         <Link
@@ -190,7 +198,8 @@ function TransactionsPageContent() {
                                     </td>
                                 </tr>
                             ))
-                        ) : (                            <tr>
+                        ) : (
+                            <tr>
                                 <td
                                     colSpan={isStaff ? 6 : 4}
                                     className="px-4 py-3 text-center text-gray-400"
@@ -206,7 +215,6 @@ function TransactionsPageContent() {
                     </tbody>
                 </table>
             </div>
-
             {/* Summary Card */}
             <div className="mt-6 bg-gray-800 rounded-xl p-6">
                 <h2 className="text-xl font-semibold mb-3">Summary</h2>
@@ -214,32 +222,42 @@ function TransactionsPageContent() {
                     <div className="bg-gray-700 rounded-lg p-4">
                         <p className="text-gray-400 text-sm">
                             Total Transactions
-                        </p>
+                        </p>{" "}
                         <p className="text-2xl font-bold text-white">
                             {filteredTransactions.length}
                         </p>
-                    </div>                    <div className="bg-gray-700 rounded-lg p-4">
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
                         <p className="text-gray-400 text-sm">Overdue</p>
                         <p className="text-2xl font-bold text-red-400">
                             {
                                 filteredTransactions.filter(
-                                    (t) => new Date(t.transaction.dueDate) < new Date()
+                                    (t) =>
+                                        new Date(t.transaction.dueDate) <
+                                        new Date()
                                 ).length
                             }
                         </p>
                     </div>
                     <div className="bg-gray-700 rounded-lg p-4">
-                        <p className="text-gray-400 text-sm">Due Soon (7 days)</p>
+                        <p className="text-gray-400 text-sm">
+                            Due Soon (7 days)
+                        </p>
                         <p className="text-2xl font-bold text-yellow-400">
                             {
-                                filteredTransactions.filter(
-                                    (t) => {
-                                        const dueDate = new Date(t.transaction.dueDate)
-                                        const now = new Date()
-                                        const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-                                        return dueDate >= now && dueDate <= sevenDaysFromNow
-                                    }
-                                ).length
+                                filteredTransactions.filter((t) => {
+                                    const dueDate = new Date(
+                                        t.transaction.dueDate
+                                    )
+                                    const now = new Date()
+                                    const sevenDaysFromNow = new Date(
+                                        now.getTime() + 7 * 24 * 60 * 60 * 1000
+                                    )
+                                    return (
+                                        dueDate >= now &&
+                                        dueDate <= sevenDaysFromNow
+                                    )
+                                }).length
                             }
                         </p>
                     </div>

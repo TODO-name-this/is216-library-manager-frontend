@@ -1,10 +1,14 @@
 "use client"
 
 import { transactionAPI } from "@/lib/api"
+import { transactionDetailAPI } from "@/lib/api/transactionDetailAPI"
 import type {
     Transaction,
+    TransactionDetail,
     CreateTransactionRequest,
+    CreateTransactionFromReservationRequest,
     UpdateTransactionRequest,
+    CreateTransactionDetailRequest,
 } from "@/lib/api/types"
 
 export async function getAllTransactions(): Promise<Transaction[]> {
@@ -67,42 +71,90 @@ export async function createTransaction(
     }
 }
 
-export async function updateTransaction(
-    id: number,
-    transactionData: UpdateTransactionRequest
+export async function createTransactionFromReservation(
+    transactionData: CreateTransactionFromReservationRequest
 ): Promise<Transaction | null> {
     try {
-        const response = await transactionAPI.updateTransaction(
-            id,
+        const response = await transactionAPI.createTransactionFromReservation(
             transactionData
         )
         if (response.error) {
-            console.error("Failed to update transaction:", response.error)
+            console.error(
+                "Failed to create transaction from reservation:",
+                response.error
+            )
             return null
         }
         return response.data || null
     } catch (error) {
-        console.error("Error updating transaction:", error)
+        console.error("Error creating transaction from reservation:", error)
         throw error
     }
 }
 
-export async function deleteTransaction(id: number): Promise<boolean> {
+export async function returnBook(
+    id: string,
+    returnData: UpdateTransactionRequest
+): Promise<Transaction | null> {
     try {
-        const response = await transactionAPI.deleteTransaction(id)
+        const response = await transactionAPI.returnBook(id, returnData)
         if (response.error) {
-            console.error("Failed to delete transaction:", response.error)
-            return false
+            console.error("Failed to return book:", response.error)
+            return null
         }
-        return true
+        return response.data || null
     } catch (error) {
-        console.error("Error deleting transaction:", error)
+        console.error("Error returning book:", error)
         throw error
     }
 }
 
-// Note: The following methods are not available in the current API:
-// - getTransactionsByUserId
-// - getTransactionsByBookCopyId
-// - updateTransactionStatus
-// If needed, these would require backend endpoint implementations
+export async function getActiveBorrows(): Promise<Transaction[]> {
+    try {
+        const response = await transactionAPI.getActiveBorrows()
+        if (response.error) {
+            console.error("Failed to fetch active borrows:", response.error)
+            return []
+        }
+        return response.data || []
+    } catch (error) {
+        console.error("Error fetching active borrows:", error)
+        throw error
+    }
+}
+
+export async function getOverdueTransactions(): Promise<Transaction[]> {
+    try {
+        const response = await transactionAPI.getOverdueTransactions()
+        if (response.error) {
+            console.error(
+                "Failed to fetch overdue transactions:",
+                response.error
+            )
+            return []
+        }
+        return response.data || []
+    } catch (error) {
+        console.error("Error fetching overdue transactions:", error)
+        throw error
+    }
+}
+
+export async function createTransactionDetail(
+    detailData: CreateTransactionDetailRequest
+): Promise<TransactionDetail | null> {
+    try {
+        const response = await transactionDetailAPI.create(detailData)
+        if (response.error) {
+            console.error(
+                "Failed to create transaction detail:",
+                response.error
+            )
+            return null
+        }
+        return response.data || null
+    } catch (error) {
+        console.error("Error creating transaction detail:", error)
+        throw error
+    }
+}

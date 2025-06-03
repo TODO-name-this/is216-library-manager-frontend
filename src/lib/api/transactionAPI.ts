@@ -2,9 +2,12 @@ import { fetchWrapper } from "../fetchWrapper"
 import {
     Transaction,
     CreateTransactionRequest,
+    CreateTransactionFromReservationRequest,
     UpdateTransactionRequest,
     ApiResponse,
     ApiError,
+    TransactionDetail,
+    CreateTransactionDetailRequest,
 } from "./types"
 
 export const transactionAPI = {
@@ -54,9 +57,7 @@ export const transactionAPI = {
                 },
             }
         }
-    },
-
-    // Create new transaction
+    }, // Create new transaction
     createTransaction: async (
         transactionData: CreateTransactionRequest
     ): Promise<ApiResponse<Transaction>> => {
@@ -73,35 +74,86 @@ export const transactionAPI = {
                 },
             }
         }
-    }, // Update transaction
-    updateTransaction: async (
-        id: number,
-        transactionData: UpdateTransactionRequest
+    },
+
+    // Create transaction from reservation
+    createTransactionFromReservation: async (
+        requestData: CreateTransactionFromReservationRequest
     ): Promise<ApiResponse<Transaction>> => {
         try {
-            const response = await fetchWrapper.put(
-                `/transaction/${id}`,
-                transactionData
+            const response = await fetchWrapper.post(
+                "/transaction/from-reservation",
+                requestData
             )
             return { data: response }
         } catch (error: any) {
             return {
                 error: {
-                    error: error.message || "Failed to update transaction",
+                    error:
+                        error.message ||
+                        "Failed to create transaction from reservation",
+                },
+            }
+        }
+    }, // Return a book (update returnedDate)
+    returnBook: async (
+        id: string,
+        returnData: UpdateTransactionRequest
+    ): Promise<ApiResponse<Transaction>> => {
+        try {
+            const response = await fetchWrapper.put(
+                `/transaction/${id}`,
+                returnData
+            )
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to return book" },
+            }
+        }
+    }, // RETURN WORKFLOW FUNCTIONS
+
+    // Get active transactions (borrowed books)
+    getActiveBorrows: async (): Promise<ApiResponse<Transaction[]>> => {
+        try {
+            const response = await fetchWrapper.get("/transaction/active")
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: {
+                    error: error.message || "Failed to fetch active borrows",
                 },
             }
         }
     },
 
-    // Delete transaction
-    deleteTransaction: async (id: number): Promise<ApiResponse<void>> => {
+    // Get overdue transactions
+    getOverdueTransactions: async (): Promise<ApiResponse<Transaction[]>> => {
         try {
-            await fetchWrapper.del(`/transaction/${id}`)
-            return { data: undefined }
+            const response = await fetchWrapper.get("/transaction/overdue")
+            return { data: response }
         } catch (error: any) {
             return {
                 error: {
-                    error: error.message || "Failed to delete transaction",
+                    error:
+                        error.message || "Failed to fetch overdue transactions",
+                },
+            }
+        }
+    },
+
+    createTransactionDetail: async ( transactionDetailData: CreateTransactionDetailRequest )
+        : Promise<ApiResponse<TransactionDetail>> => {
+        try {
+            const response = await fetchWrapper.post(
+                "/transaction-detail",
+                transactionDetailData
+            )
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: {
+                    error: error.message || "Failed to create transaction detail",
                 },
             }
         }

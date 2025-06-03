@@ -270,5 +270,43 @@ export const reservationAPI = {
         } catch (error) {
             return { error: "Network error while deleting reservation" }
         }
+    },    // Assign book copy to reservation (ADMIN, LIBRARIAN)
+    assignCopy: async (reservationId: string, bookCopyId: string): Promise<Reservation | ApiError> => {
+        try {
+            const response = await fetchWrapper.post(`/reservation/${reservationId}/assign-copy`, {
+                bookCopyId
+            })
+            if (response.error) {
+                return {
+                    error: response.error.message || "Failed to assign book copy to reservation"
+                }
+            }
+            return response
+        } catch (error) {
+            return { error: "Network error while assigning book copy" }
+        }
+    },
+
+    // Convert reservation to transaction - helper method
+    convertToTransaction: async (reservationId: string, bookCopyId: string): Promise<any | ApiError> => {
+        try {
+            // First, assign the book copy to the reservation
+            const assignResult = await reservationAPI.assignCopy(reservationId, bookCopyId)
+            if ('error' in assignResult) {
+                return assignResult
+            }
+
+            // Then update reservation status to COMPLETED
+            const updateResult = await reservationAPI.updateReservation(reservationId, {
+                status: "COMPLETED"
+            })
+            if ('error' in updateResult) {
+                return updateResult
+            }
+
+            return { success: true, reservation: updateResult }
+        } catch (error) {
+            return { error: "Network error while converting reservation to transaction" }
+        }
     },
 }

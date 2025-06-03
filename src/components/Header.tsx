@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/AuthContext"
 export default function Header() {
     const pathname = usePathname()
     const { theme, toggleTheme } = useTheme()
-    const { user, isAuthenticated, logout, isLibrarian } = useAuth()
+    const { user, isAuthenticated, logout, isLibrarian, isAdmin } = useAuth()
 
     return (
         <header className="bg-gray-900 border-b border-gray-700 py-4 shadow-lg light-mode:bg-white light-mode:border-gray-200">
@@ -40,20 +40,22 @@ export default function Header() {
                         }`}
                     >
                         Authors
-                    </Link>
-                    {/* Show Reserved and Transactions only to authenticated users */}
+                    </Link>                    {/* Show Reserved and Transactions only to authenticated users */}
                     {isAuthenticated && (
                         <>
-                            <Link
-                                href="/reserved"
-                                className={`px-3 py-1 rounded-md transition-colors ${
-                                    pathname.startsWith("/reserved")
-                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
-                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
-                                }`}
-                            >
-                                Reserved
-                            </Link>
+                            {/* For regular users, show separate Reserved tab */}
+                            {!(isLibrarian() || isAdmin()) && (
+                                <Link
+                                    href="/reserved"
+                                    className={`px-3 py-1 rounded-md transition-colors ${
+                                        pathname.startsWith("/reserved")
+                                            ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                            : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                    }`}
+                                >
+                                    Reserved
+                                </Link>
+                            )}
                             <Link
                                 href="/transactions"
                                 className={`px-3 py-1 rounded-md transition-colors ${
@@ -66,16 +68,48 @@ export default function Header() {
                             </Link>
                         </>
                     )}
-                    <Link
-                        href="/qanda"
-                        className={`px-3 py-1 rounded-md transition-colors ${
-                            pathname.startsWith("/qanda")
-                                ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
-                                : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
-                        }`}
-                    >
-                        Q&A
-                    </Link>
+                    {/* Show Users and Workflow management only to librarians and admins */}
+                    {isAuthenticated && (isLibrarian() || isAdmin()) && (
+                        <>
+                            <Link
+                                href="/users"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/users")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Users
+                            </Link>                            {/* Combined Reservations tab for ADMIN/LIBRARIAN */}
+                            <Link
+                                href="/workflow"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/workflow") || pathname.startsWith("/reserved")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Reservations
+                            </Link><Link
+                                href="/inventory"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/inventory")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Inventory
+                            </Link>                            <Link
+                                href="/returns"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/returns")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Returns                            </Link>
+                        </>
+                    )}
                 </div>
 
                 <div className="ml-auto flex items-center space-x-4">

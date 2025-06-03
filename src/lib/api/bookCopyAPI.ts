@@ -1,5 +1,5 @@
 import { fetchWrapper } from "../fetchWrapper"
-import { BookCopy, CreateBookCopyRequest, ApiResponse } from "./types"
+import { BookCopy, CreateBookCopyRequest, ApiResponse, UpdateBookCopyRequest } from "./types"
 
 export const bookCopyAPI = {
     // Get all book copies
@@ -52,6 +52,21 @@ export const bookCopyAPI = {
         } catch (error: any) {
             return {
                 error: { error: error.message || "Failed to delete book copy" },
+            }
+        }
+    },
+
+    // Update book copy
+    updateBookCopy: async (
+        id: string,
+        updateData: UpdateBookCopyRequest
+    ): Promise<ApiResponse<BookCopy>> => {
+        try {
+            const response = await fetchWrapper.put(`/bookCopy/${id}`, updateData)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to update book copy" },
             }
         }
     },

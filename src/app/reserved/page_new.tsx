@@ -7,7 +7,6 @@ import {
     getMyReservations,
 } from "@/app/actions/reservationActions"
 import { getAllUsers } from "@/app/actions/userActions"
-import { createTransactionFromReservation } from "@/app/actions/transactionActions"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
 
@@ -49,10 +48,12 @@ function ReservedBooks() {
                 for (const reservation of reservations) {
                     let reservedBookItem: ReservedBookData = {
                         reservation,
-                    } // Only fetch user data if we're staff (for display purposes)
+                    }
+
+                    // Only fetch user data if we're staff (for display purposes)
                     if (isStaff) {
                         const userForReservation = users.find(
-                            (u) => u.id === reservation.userId
+                            (u) => u.id === reservation.userId.toString()
                         )
                         reservedBookItem.user = userForReservation
                     }
@@ -85,38 +86,8 @@ function ReservedBooks() {
         }
 
         try {
-            // Find the reservation to get the bookCopyId
-            const reservation = reservedBooks.find(
-                (item) => item.reservation.id === reservationId
-            )?.reservation
-
-            if (!reservation) {
-                alert("Reservation not found")
-                return
-            }
-
-            if (!reservation.bookCopyId) {
-                alert(
-                    "No book copy assigned to this reservation yet. Please assign a book copy first."
-                )
-                return
-            }
-
-            // Create transaction from reservation using the new API
-            const transaction = await createTransactionFromReservation({
-                reservationId: reservationId,
-                bookCopyId: reservation.bookCopyId,
-            })
-
-            if (transaction) {
-                alert("Transaction created successfully!")
-                // Remove the reservation from the list since it's now converted to a transaction
-                setReservedBooks((prev) =>
-                    prev.filter((item) => item.reservation.id !== reservationId)
-                )
-            } else {
-                alert("Failed to create transaction")
-            }
+            // Navigate to the transaction creation page with the user ID
+            window.location.href = `/transactions/${userId}/details`
         } catch (err) {
             console.error("Error creating transaction:", err)
             alert("Failed to create transaction")
@@ -213,7 +184,7 @@ function ReservedBooks() {
                                 <td className="px-4 py-3 text-blue-300 font-medium">
                                     {item.reservation.bookTitle ||
                                         "Unknown Title"}
-                                </td>{" "}
+                                </td>
                                 <td className="px-4 py-3 text-gray-400">
                                     {item.reservation.bookAuthors?.join(", ") ||
                                         "Unknown"}

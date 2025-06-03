@@ -8,6 +8,7 @@ export { publisherAPI } from "./publisherAPI"
 export { categoryAPI } from "./categoryAPI"
 export { bookCopyAPI } from "./bookCopyAPI"
 export { transactionAPI } from "./transactionAPI"
+export { transactionDetailAPI } from "./transactionDetailAPI"
 export { authorAPI } from "./authorAPI"
 export { questionAPI } from "./questionAPI"
 

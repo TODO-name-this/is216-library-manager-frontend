@@ -66,5 +66,15 @@ export const userAPI = {
                 error: { error: error.message || "Failed to delete user" },
             }
         }
+    },    // Search users by CCCD for librarian workflow
+    searchUserByCCCD: async (cccd: string): Promise<ApiResponse<User[]>> => {
+        try {
+            const response = await fetchWrapper.get(`/user/search?cccd=${encodeURIComponent(cccd)}`)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to search users by CCCD" },
+            }
+        }
     },
 }

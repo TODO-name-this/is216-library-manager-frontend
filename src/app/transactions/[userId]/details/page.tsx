@@ -46,28 +46,26 @@ export default function TransactionDetailsPage({
                     throw new Error("User not found")
                 }
 
-                setUser(foundUser)
-
-                // Get user reservations
+                setUser(foundUser) // Get user reservations
                 const userReservations = await getReservationsByUserId(
                     Number(foundUser.id)
                 )
-                setReservations(userReservations)                // Build transaction details from reservations
-                const transactionDetails: TransactionDetail[] = [];
+                setReservations(userReservations)
+
+                // Build transaction details from reservations
+                const transactionDetails: TransactionDetail[] = []
                 for (const reservation of userReservations) {
-                    if (reservation.status === "APPROVED") {
-                        // Book details are already included in the reservation response
-                        transactionDetails.push({
-                            bookCopyId: reservation.bookCopyId || reservation.bookTitleId, // Use bookCopyId if available, otherwise bookTitleId
-                            title: reservation.bookTitle,
-                            author: reservation.bookAuthors.join(", ") || "Unknown",
-                            dueDate: new Date(
-                                Date.now() + 14 * 24 * 60 * 60 * 1000
-                            )
-                                .toISOString()
-                                .slice(0, 10), // 14 days from now
-                        })
-                    }
+                    // All active reservations can be converted to transactions
+                    // Book details are already included in the reservation response
+                    transactionDetails.push({
+                        bookCopyId:
+                            reservation.bookCopyId || reservation.bookTitleId, // Use bookCopyId if available, otherwise bookTitleId
+                        title: reservation.bookTitle,
+                        author: reservation.bookAuthors.join(", ") || "Unknown",
+                        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+                            .toISOString()
+                            .slice(0, 10), // 14 days from now
+                    })
                 }
 
                 setDetails(transactionDetails)
@@ -101,24 +99,26 @@ export default function TransactionDetailsPage({
     const handleRemove = (index: number) => {
         setDetails((prev) => prev.filter((_, i) => i !== index))
     }
+
     const handleSave = async () => {
         if (!confirm("Are you sure you want to create these transactions?"))
             return
 
         try {
             setSubmitting(true)
-            setError(null)            // Create transactions for each detail
+            setError(null)
+
+            // Create separate transactions for each book (new backend structure)
             for (const detail of details) {
                 const transactionData = {
                     userId: user?.id || userId,
-                    borrowDate: new Date().toISOString().split('T')[0], // Today
-                    dueDate: detail.dueDate,
+                    bookCopyId: detail.bookCopyId,
                 }
 
                 await createTransaction(transactionData)
             }
 
-            alert("Transactions created successfully.")
+            alert(`${details.length} transaction(s) created successfully.`)
             router.push("/transactions")
         } catch (err) {
             console.error("Error creating transactions:", err)
@@ -135,6 +135,7 @@ export default function TransactionDetailsPage({
     const handleBack = () => {
         router.back()
     }
+
     if (loading) {
         return (
             <main className="p-6 bg-gray-900 text-white min-h-screen flex items-center justify-center">

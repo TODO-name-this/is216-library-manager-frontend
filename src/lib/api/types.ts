@@ -2,10 +2,13 @@
 
 export interface User {
     id: string
-    cccd: string
     name: string
-    password: string
+    email: string
     role: "ADMIN" | "LIBRARIAN" | "USER"
+    balance: number
+    cccd: string
+    phoneNumber: string
+    address: string
 }
 
 export interface BookTitle {
@@ -33,7 +36,15 @@ export interface BookTitle {
 export interface BookCopy {
     id: string
     bookTitleId: string
-    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "DAMAGED"
+    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST"
+    condition: "NEW" | "GOOD" | "WORN" | "DAMAGED"
+    // Enhanced fields from new API
+    bookTitle: string
+    bookPhotoUrl: string
+    bookPrice: number
+    borrowerCccd: string | null
+    borrowerName: string | null
+    borrowerId: string | null
 }
 
 export interface Author {
@@ -70,23 +81,12 @@ export interface Review {
 
 export interface Reservation {
     id: string
-    reservationDate: string
-    expirationDate: string
-    status: "PENDING" | "APPROVED" | "CANCELLED" | "COMPLETED"
-    deposit: number
+    userId: string
     bookTitleId: string
     bookCopyId: string | null
-    userId: string
-    bookTitle: string
-    bookImageUrl: string
-    bookAuthors: string[]
-}
-
-export interface TransactionDetail {
-    transactionId: string
-    bookCopyId: string
-    returnedDate: string | null
-    penaltyFee: number
+    reservationDate: string
+    expirationDate: string
+    deposit: number
     bookTitle: string
     bookImageUrl: string
     bookAuthors: string[]
@@ -94,10 +94,26 @@ export interface TransactionDetail {
 
 export interface Transaction {
     id: string
+    userId: string
+    bookCopyId: string
     borrowDate: string
     dueDate: string
-    userId: string
-    details: TransactionDetail[]
+    returnedDate: string | null
+    status: "BORROWED" | "OVERDUE" | "COMPLETED"
+    totalFee: number
+    penaltyFee: number
+    note: string | null
+    // Enhanced fields for display
+    userName?: string
+    bookTitle?: string
+    bookPhotoUrl?: string
+    transactionDetail?: TransactionDetail | null
+}
+
+export interface TransactionDetail {
+    transactionId: string
+    penaltyFee: number
+    description: string | null
 }
 
 export interface Question {
@@ -234,27 +250,50 @@ export interface UpdateReviewRequest {
 
 export interface CreateReservationRequest {
     bookTitleId: string
-    bookCopyId: string
 }
 
 export interface UpdateReservationRequest {
-    status: "PENDING" | "APPROVED" | "CANCELLED"
+    bookCopyId?: string
+    expirationDate?: string
+}
+
+export interface AssignCopyToReservationRequest {
+    bookCopyId: string
 }
 
 export interface CreateBookCopyRequest {
     bookTitleId: string
+    condition?: "NEW" | "GOOD" | "WORN" | "DAMAGED"
+}
+
+export interface UpdateBookCopyRequest {
+    status?: "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST"
+    condition?: "NEW" | "GOOD" | "WORN" | "DAMAGED"
 }
 
 export interface CreateTransactionRequest {
-    borrowDate: string
-    dueDate: string
     userId: string
+    bookCopyId: string
+}
+
+export interface CreateTransactionFromReservationRequest {
+    reservationId: string
+    bookCopyId: string
 }
 
 export interface UpdateTransactionRequest {
-    borrowDate?: string
-    dueDate?: string
-    userId?: string
+    returnedDate?: string
+}
+
+export interface CreateTransactionDetailRequest {
+    transactionId: string
+    penaltyFee: number
+    description: string
+}
+
+export interface UpdateTransactionDetailRequest {
+    penaltyFee?: number
+    description?: string
 }
 
 export interface CreateQuestionRequest {

@@ -40,7 +40,7 @@ export default function AuthorDetailPage() {
                     authorData.bookNames &&
                     authorData.bookIds.length > 0
                 ) {
-                    const authorBooks = authorData.bookIds.map(
+                    const authorBooks: BookTitle[] = authorData.bookIds.map(
                         (bookId, index) => ({
                             id: bookId,
                             title:
@@ -63,6 +63,13 @@ export default function AuthorDetailPage() {
                             authorIds: [authorData.id],
                             reviews: [],
                             canBorrow: true, // Required property - default to true
+                            price: 0, // Required property
+                            totalCopies: 0, // Required property
+                            availableCopies: 0, // Required property
+                            onlineReservations: 0, // Required property
+                            maxOnlineReservations: 0, // Required property
+                            userReservationsForThisBook: null, // Required property
+                            maxUserReservations: null, // Required property
                         })
                     )
                     setBooks(authorBooks)

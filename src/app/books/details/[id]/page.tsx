@@ -261,18 +261,19 @@ export default function BookDetailsPage() {
             {/* Book image + info */}
             <div className="flex flex-col space-y-6 md:flex-row md:space-y-0 md:space-x-8">
               <div className="flex flex-col items-center space-y-4 flex-shrink-0">
-                {book.imageUrl ? (
-                  <img
-                    className="h-auto w-78 rounded shadow-lg"
-                    src={book.imageUrl}
-                    alt={book.title}
-                  />
-                ) : (
-                  <div className="h-96 w-78 rounded shadow-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center">
+                {/* Box for missing image placeholder */}
+                <div className="w-78 min-h-96 rounded shadow-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center m-0">
+                  {book.imageUrl ? (
+                    <img
+                      className="w-full h-auto object-contain text-center"
+                      src={book.imageUrl}
+                      alt={book.title + " cover image"}
+                    />
+                  ) : (
                     <Book className="w-20 h-20 text-gray-400" />
-                  </div>
-                )}{" "}
-                <div className="flex space-x-3">
+                  )}
+                </div>
+                <div className="flex space-x-3 mt-5">
                   {(isAdmin() || isLibrarian()) && (
                     <>
                       <Link
@@ -288,7 +289,7 @@ export default function BookDetailsPage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-col justify-center space-y-4">
+              <div className="flex flex-col justify-top mt-4 space-y-4">
                 <h2 className="text-3xl font-bold">{book.title}</h2>{" "}
                 <p>
                   <strong>Author:</strong>{" "}

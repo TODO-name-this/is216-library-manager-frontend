@@ -1,5 +1,7 @@
 // API Types for the Library Management System
 
+import { ReactNode } from "react"
+
 export interface User {
     id: string
     name: string
@@ -80,6 +82,9 @@ export interface Review {
 }
 
 export interface Reservation {
+    userName: any
+    availableCopies: ReactNode
+    totalCopies: ReactNode
     id: string
     userId: string
     bookTitleId: string
@@ -90,6 +95,7 @@ export interface Reservation {
     bookTitle: string
     bookImageUrl: string
     bookAuthors: string[]
+    status: "PENDING" | "READY_FOR_PICKUP"
 }
 
 export interface Transaction {
@@ -238,9 +244,10 @@ export interface UpdateCategoryRequest {
 }
 
 export interface CreateReviewRequest {
-    bookId: string
-    rating: number
+    bookTitleId: string
+    star: number
     comment: string
+    date: string
 }
 
 export interface UpdateReviewRequest {
@@ -274,6 +281,8 @@ export interface UpdateBookCopyRequest {
 export interface CreateTransactionRequest {
     userId: string
     bookCopyId: string
+    bookCopyIds: any[]
+    note: string
 }
 
 export interface CreateTransactionFromReservationRequest {
@@ -305,4 +314,9 @@ export interface UpdateQuestionRequest {
     answer?: string
     answeredBy?: string
     answeredDate?: string
+}
+
+export interface CreateReturnRequest {
+  penaltyFee: number;
+  description?: string;
 }

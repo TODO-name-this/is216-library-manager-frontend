@@ -20,7 +20,7 @@ export default function WorkflowTestPage() {
     
     const [isRunning, setIsRunning] = useState(false)
     const [testData, setTestData] = useState({
-        cccd: "123456789012",
+        cccd: "012345678901",
         bookTitleId: "",
         bookCopyId: ""
     })
@@ -157,7 +157,8 @@ export default function WorkflowTestPage() {
                                         const transactionResult = await transactionAPI.createTransaction({
                                             userId: user.id,
                                             bookCopyIds: [selectedCopy.id],
-                                            note: "Created from workflow test"
+                                            note: "Created from workflow test",
+                                            bookCopyId: ""
                                         })
                                         
                                         if (transactionResult.data) {
@@ -171,7 +172,7 @@ export default function WorkflowTestPage() {
                                                 {
                                                     penaltyFee: 5,
                                                     description: "Test return - minor wear noted during workflow test"
-                                                }
+                                                } 
                                             )
                                             
                                             if (returnResult.data) {

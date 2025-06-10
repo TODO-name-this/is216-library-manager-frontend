@@ -266,11 +266,6 @@ export default function BookDetailsPage() {
                     className="h-auto w-78 rounded shadow-lg"
                     src={book.imageUrl}
                     alt={book.title}
-                    onError={(e) => {
-                      const img = e.currentTarget as HTMLImageElement;
-                      const text = encodeURIComponent(book.title);
-                      img.src = `https://via.placeholder.com/256x384/374151/9ca3af?text=${text}`;
-                    }}
                   />
                 ) : (
                   <div className="h-96 w-78 rounded shadow-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center">

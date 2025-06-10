@@ -517,12 +517,6 @@ function AddBookPage() {
                                             src={formData.imageUrl}
                                             alt="Book cover preview"
                                             className="max-w-full h-48 object-contain mx-auto rounded"
-                                            onError={(e) => {
-                                                const img =
-                                                    e.currentTarget as HTMLImageElement
-                                                img.src =
-                                                    "https://via.placeholder.com/200x300/374151/9ca3af?text=No+Image"
-                                            }}
                                         />
                                     </div>
                                 </div>

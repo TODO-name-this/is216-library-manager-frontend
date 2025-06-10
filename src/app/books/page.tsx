@@ -199,15 +199,6 @@ export default function BooksPage() {
                                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                             src={book.imageUrl}
                                             alt={book.title}
-                                            onError={(e) => {
-                                                const img =
-                                                    e.currentTarget as HTMLImageElement
-                                                // Tạo URL placeholder với text là tiêu đề sách
-                                                const text = encodeURIComponent(
-                                                    book.title
-                                                )
-                                                img.src = `https://via.placeholder.com/200x300?text=${text}`
-                                            }}
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">

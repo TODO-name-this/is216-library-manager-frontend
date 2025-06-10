@@ -427,7 +427,7 @@ function InventoryManagement() {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light-mode:text-gray-500 uppercase tracking-wider">
                                         Status
-                                    </th>{" "}
+                                    </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light-mode:text-gray-500 uppercase tracking-wider">
                                         Condition
                                     </th>
@@ -440,7 +440,6 @@ function InventoryManagement() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700 light-mode:divide-gray-200">
-                                {" "}
                                 {filteredCopies.length === 0 ? (
                                     <tr>
                                         <td

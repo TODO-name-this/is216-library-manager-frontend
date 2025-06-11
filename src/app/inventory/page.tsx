@@ -23,6 +23,7 @@ import {
     CircleEllipsis,
     ArrowLeft,
     BookOpen,
+    Copy,
 } from "lucide-react"
 
 export default function InventoryPage() {
@@ -195,6 +196,19 @@ function InventoryManagement() {
 
     const getDisplayStatus = (copy: BookCopyWithDueInfo) => {
         return copy.isOverdue ? "OVERDUE" : copy.status
+    }
+
+    const handleCopyIdClick = (copyId: string) => {
+        // Try to copy to clipboard, fallback to alert
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(copyId).then(() => {
+                alert(`Copy ID copied to clipboard:\n${copyId}`)
+            }).catch(() => {
+                alert(`Copy ID:\n${copyId}`)
+            })
+        } else {
+            alert(`Copy ID:\n${copyId}`)
+        }
     }
 
     const getConditionColor = (condition: string) => {
@@ -499,12 +513,22 @@ function InventoryManagement() {
                                             key={copy.bookCopyId}
                                             className="hover:bg-gray-700 light-mode:hover:bg-gray-50"
                                         >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <Package className="w-4 h-4 mr-2 text-gray-400" />
-                                                    <span className="font-mono text-sm">
-                                                        {copy.bookCopyId}
-                                                    </span>
+                                            <td className="px-6 py-4 whitespace-nowrap w-48">
+                                                <div className="flex items-center max-w-40">
+                                                        <button
+                                                            onClick={() => handleCopyIdClick(copy.bookCopyId)}
+                                                            className="font-mono text-sm text-blue-400 hover:text-blue-300 cursor-pointer truncate mr-1"
+                                                            title={`Click to view full ID: ${copy.bookCopyId}`}
+                                                        >
+                                                            {copy.bookCopyId}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleCopyIdClick(copy.bookCopyId)}
+                                                            className="flex-shrink-0"
+                                                            title="Copy full ID"
+                                                        >
+                                                            <Copy className="w-3 h-3 text-gray-400 hover:text-blue-400 cursor-pointer" />
+                                                        </button>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -826,22 +850,19 @@ function CreateCopyModal({
         setCreating(true)
 
         try {
-            // Create multiple copies based on quantity
-            const createPromises = Array.from({ length: formData.quantity }, () =>
-                bookCopyAPI.createBookCopy({
-                    bookTitleId: selectedBook.id,
-                    condition: formData.condition,
-                })
-            )
-
-            const results = await Promise.all(createPromises)
+            // Create copies using the new API with quantity
+            const result = await bookCopyAPI.createBookCopy({
+                bookTitleId: selectedBook.id,
+                condition: formData.condition,
+                quantity: formData.quantity,
+            })
             
-            // Check if any failed
-            const failed = results.filter(result => result.error)
-            if (failed.length > 0) {
-                alert(`Failed to create ${failed.length} out of ${formData.quantity} book copies`)
+            // Check if creation failed
+            if (result.error) {
+                alert(`Failed to create book copies: ${result.error.error}`)
             } else {
-                alert(`Successfully created ${formData.quantity} book cop${formData.quantity === 1 ? 'y' : 'ies'}!`)
+                const createdCopies = result.data || []
+                alert(`Successfully created ${createdCopies.length} book cop${createdCopies.length === 1 ? 'y' : 'ies'}!`)
             }
 
             onSave()

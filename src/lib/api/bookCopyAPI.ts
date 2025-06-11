@@ -28,10 +28,10 @@ export const bookCopyAPI = {
         }
     },
 
-    // Create new book copy
+    // Create new book copies
     createBookCopy: async (
         bookCopyData: CreateBookCopyRequest
-    ): Promise<ApiResponse<BookCopy>> => {
+    ): Promise<ApiResponse<BookCopy[]>> => {
         try {
             const response = await fetchWrapper.post(
                 "/bookCopy",
@@ -40,7 +40,7 @@ export const bookCopyAPI = {
             return { data: response }
         } catch (error: any) {
             return {
-                error: { error: error.message || "Failed to create book copy" },
+                error: { error: error.message || "Failed to create book copies" },
             }
         }
     },

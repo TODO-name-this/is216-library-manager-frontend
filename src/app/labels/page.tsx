@@ -20,6 +20,7 @@ import {
     AlertCircle,
     Eye,
     FileText,
+    Copy,
 } from "lucide-react"
 
 type LabelSettings = {
@@ -134,6 +135,24 @@ function LabelManagement() {
             setSelectedCopies(new Set(filteredCopies.map((copy) => copy.id)))
         }
         setSelectAll(!selectAll)
+    }
+
+    const truncateId = (id: string, maxLength: number = 8) => {
+        if (id.length <= maxLength) return id
+        return id.substring(0, maxLength) + "..."
+    }
+
+    const handleCopyIdClick = (copyId: string) => {
+        // Try to copy to clipboard, fallback to alert
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(copyId).then(() => {
+                alert(`Copy ID copied to clipboard:\n${copyId}`)
+            }).catch(() => {
+                alert(`Copy ID:\n${copyId}`)
+            })
+        } else {
+            alert(`Copy ID:\n${copyId}`)
+        }
     }
 
     const handlePrintLabels = () => {
@@ -394,7 +413,7 @@ function LabelManagement() {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light-mode:text-gray-500 uppercase tracking-wider">
                                         Select
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light-mode:text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light-mode:text-gray-500 uppercase tracking-wider w-32">
                                         Copy ID
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 light-mode:text-gray-500 uppercase tracking-wider">
@@ -449,12 +468,25 @@ function LabelManagement() {
                                                     )}
                                                 </button>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4 whitespace-nowrap w-32">
                                                 <div className="flex items-center">
                                                     <QrCode className="w-4 h-4 mr-2 text-gray-400" />
-                                                    <span className="font-mono text-sm">
-                                                        {copy.id}
-                                                    </span>
+                                                    <div className="flex items-center min-w-0">
+                                                        <button
+                                                            onClick={() => handleCopyIdClick(copy.id)}
+                                                            className="font-mono text-sm text-blue-400 hover:text-blue-300 cursor-pointer truncate max-w-20 mr-1"
+                                                            title={`Click to view full ID: ${copy.id}`}
+                                                        >
+                                                            {truncateId(copy.id)}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleCopyIdClick(copy.id)}
+                                                            className="flex-shrink-0"
+                                                            title="Copy full ID"
+                                                        >
+                                                            <Copy className="w-3 h-3 text-gray-400 hover:text-blue-400 cursor-pointer" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </td>{" "}
                                             <td className="px-6 py-4">

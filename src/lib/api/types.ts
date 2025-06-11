@@ -286,6 +286,7 @@ export interface AssignCopyToReservationRequest {
 
 export interface CreateBookCopyRequest {
     bookTitleId: string
+    quantity: number
     condition?: "NEW" | "GOOD" | "WORN" | "DAMAGED"
 }
 

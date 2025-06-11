@@ -117,19 +117,6 @@ export async function getBookCopyById(id: number): Promise<BookCopy | null> {
     return response.data || null
 }
 
-export async function createBookCopy(
-    bookTitleId: number
-): Promise<BookCopy | null> {
-    const response = await bookCopyAPI.createBookCopy({
-        bookTitleId: bookTitleId.toString(),
-    })
-    if (response.error) {
-        console.error("Failed to create book copy:", response.error)
-        return null
-    }
-    return response.data || null
-}
-
 export async function deleteBookCopy(id: number): Promise<boolean> {
     const response = await bookCopyAPI.deleteBookCopy(id)
     if (response.error) {

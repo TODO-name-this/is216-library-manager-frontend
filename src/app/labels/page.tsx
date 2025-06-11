@@ -314,7 +314,7 @@ function LabelManagement() {
                             <option value="ALL">All Status</option>
                             <option value="AVAILABLE">Available</option>
                             <option value="BORROWED">Borrowed</option>
-                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="UNAVAILABLE">Unavailable</option>
                             <option value="LOST">Lost</option>
                         </select>
 
@@ -478,8 +478,8 @@ function LabelManagement() {
                                                               "BORROWED"
                                                             ? "bg-blue-100 text-blue-800"
                                                             : copy.status ===
-                                                              "MAINTENANCE"
-                                                            ? "bg-yellow-100 text-yellow-800"
+                                                              "UNAVAILABLE"
+                                                            ? "bg-orange-100 text-orange-800"
                                                             : "bg-red-100 text-red-800"
                                                     }`}
                                                 >

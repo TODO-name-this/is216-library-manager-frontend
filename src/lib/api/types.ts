@@ -38,7 +38,7 @@ export interface BookTitle {
 export interface BookCopy {
     id: string
     bookTitleId: string
-    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST"
+    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST"
     condition: "NEW" | "GOOD" | "WORN" | "DAMAGED"
     // Enhanced fields from new API
     bookTitle: string
@@ -290,7 +290,7 @@ export interface CreateBookCopyRequest {
 }
 
 export interface UpdateBookCopyRequest {
-    status?: "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST"
+    status?: "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST"
     condition?: "NEW" | "GOOD" | "WORN" | "DAMAGED"
 }
 

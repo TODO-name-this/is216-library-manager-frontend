@@ -3,15 +3,15 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { bookCopyAPI } from "@/lib/api"
-import { BookCopyWithDueInfo } from "@/lib/api/types"
+import { bookCopyAPI, bookTitleAPI } from "@/lib/api"
+import { BookCopyWithDueInfo, BookTitle } from "@/lib/api/types"
 import {
     Search,
     Filter,
     Package,
     AlertCircle,
     CheckCircle2,
-    Wrench,
+    Ban,
     XCircle,
     Edit,
     Trash2,
@@ -21,6 +21,8 @@ import {
     BarChart3,
     RefreshCw,
     CircleEllipsis,
+    ArrowLeft,
+    BookOpen,
 } from "lucide-react"
 
 export default function InventoryPage() {
@@ -47,7 +49,7 @@ function InventoryManagement() {
         available: 0,
         borrowed: 0,
         reserved: 0,
-        maintenance: 0,
+        unavailable: 0,
         lost: 0,
         overdue: 0,
     }) // Modal states
@@ -89,8 +91,8 @@ function InventoryManagement() {
                 reserved: copiesData.filter(
                     (c: BookCopyWithDueInfo) => c.status === "RESERVED"
                 ).length,
-                maintenance: copiesData.filter(
-                    (c: BookCopyWithDueInfo) => c.status === "MAINTENANCE"
+                unavailable: copiesData.filter(
+                    (c: BookCopyWithDueInfo) => c.status === "UNAVAILABLE"
                 ).length,
                 lost: copiesData.filter((c: BookCopyWithDueInfo) => c.status === "LOST")
                     .length,
@@ -161,8 +163,8 @@ function InventoryManagement() {
                 return <CircleEllipsis className="w-4 h-4 text-blue-500" />
             case "RESERVED":
                 return <Package className="w-4 h-4 text-purple-500" />
-            case "MAINTENANCE":
-                return <Wrench className="w-4 h-4 text-yellow-500" />
+            case "UNAVAILABLE":
+                return <Ban className="w-4 h-4 text-orange-500" />
             case "LOST":
                 return <XCircle className="w-4 h-4 text-white" />
             default:
@@ -182,8 +184,8 @@ function InventoryManagement() {
                 return "bg-blue-100 text-blue-800 light-mode:bg-blue-100"
             case "RESERVED":
                 return "bg-purple-100 text-purple-800 light-mode:bg-purple-100"
-            case "MAINTENANCE":
-                return "bg-yellow-100 text-yellow-800 light-mode:bg-yellow-100"
+            case "UNAVAILABLE":
+                return "bg-orange-100 text-orange-800 light-mode:bg-orange-100"
             case "LOST":
                 return "bg-red-600 text-white light-mode:bg-red-600 light-mode:text-white"
             default:
@@ -351,13 +353,13 @@ function InventoryManagement() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-400 light-mode:text-gray-600">
-                                    Maintenance
+                                    Unavailable
                                 </p>
-                                <p className="text-2xl font-bold text-yellow-500">
-                                    {stats.maintenance}
+                                <p className="text-2xl font-bold text-orange-500">
+                                    {stats.unavailable}
                                 </p>
                             </div>
-                            <Wrench className="w-8 h-8 text-yellow-500" />
+                            <Ban className="w-8 h-8 text-orange-500" />
                         </div>
                     </div>
 
@@ -405,7 +407,7 @@ function InventoryManagement() {
                             <option value="AVAILABLE">Available</option>
                             <option value="BORROWED">Borrowed</option>
                             <option value="OVERDUE">Overdue</option>
-                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="UNAVAILABLE">Unavailable</option>
                             <option value="LOST">Lost</option>
                         </select>
 
@@ -634,7 +636,7 @@ function EditCopyModal({
     onSave: () => void
 }) {
     const [formData, setFormData] = useState({
-        status: copy.status as "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST",
+        status: copy.status as "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST",
         condition: copy.condition as "NEW" | "GOOD" | "WORN" | "DAMAGED",
     })
     const [saving, setSaving] = useState(false)
@@ -695,7 +697,7 @@ function EditCopyModal({
                         >
                             <option value="AVAILABLE">Available</option>
                             <option value="BORROWED">Borrowed</option>
-                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="UNAVAILABLE">Unavailable</option>
                             <option value="LOST">Lost</option>
                         </select>
                     </div>
@@ -751,16 +753,72 @@ function CreateCopyModal({
     onClose: () => void
     onSave: () => void
 }) {
+    const [step, setStep] = useState<"search" | "details">("search")
+    const [searchTerm, setSearchTerm] = useState("")
+    const [bookTitles, setBookTitles] = useState<BookTitle[]>([])
+    const [filteredTitles, setFilteredTitles] = useState<BookTitle[]>([])
+    const [selectedBook, setSelectedBook] = useState<BookTitle | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [searching, setSearching] = useState(false)
+    
     const [formData, setFormData] = useState({
-        bookTitle: "",
+        quantity: 1,
         condition: "NEW" as const,
     })
     const [creating, setCreating] = useState(false)
 
+    // Fetch book titles on mount
+    useEffect(() => {
+        const fetchBookTitles = async () => {
+            setLoading(true)
+            try {
+                const response = await bookTitleAPI.getBookTitles()
+                if (response.data) {
+                    setBookTitles(response.data)
+                    setFilteredTitles(response.data)
+                }
+            } catch (error) {
+                console.error("Failed to fetch book titles:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchBookTitles()
+    }, [])
+
+    // Filter titles based on search term
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFilteredTitles(bookTitles)
+            setSearching(false)
+            return
+        }
+
+        setSearching(true)
+        const timeoutId = setTimeout(() => {
+            const filtered = bookTitles.filter((book) =>
+                book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                book.isbn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                book.authorNames.some(author => 
+                    author.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+            )
+            setFilteredTitles(filtered)
+            setSearching(false)
+        }, 300) // Debounce search
+
+        return () => clearTimeout(timeoutId)
+    }, [searchTerm, bookTitles])
+
+    const handleBookSelect = (book: BookTitle) => {
+        setSelectedBook(book)
+        setStep("details")
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.bookTitle) {
+        if (!selectedBook) {
             alert("Please select a book title")
             return
         }
@@ -768,21 +826,29 @@ function CreateCopyModal({
         setCreating(true)
 
         try {
-            const response = await bookCopyAPI.createBookCopy({
-                bookTitleId: formData.bookTitle,
-                condition: formData.condition,
-            })
+            // Create multiple copies based on quantity
+            const createPromises = Array.from({ length: formData.quantity }, () =>
+                bookCopyAPI.createBookCopy({
+                    bookTitleId: selectedBook.id,
+                    condition: formData.condition,
+                })
+            )
 
-            if (response.error) {
-                alert(`Failed to create book copy: ${response.error.error}`)
-                return
+            const results = await Promise.all(createPromises)
+            
+            // Check if any failed
+            const failed = results.filter(result => result.error)
+            if (failed.length > 0) {
+                alert(`Failed to create ${failed.length} out of ${formData.quantity} book copies`)
+            } else {
+                alert(`Successfully created ${formData.quantity} book cop${formData.quantity === 1 ? 'y' : 'ies'}!`)
             }
 
             onSave()
             onClose()
         } catch (error) {
-            console.error("Failed to create book copy:", error)
-            alert("An error occurred while creating the book copy")
+            console.error("Failed to create book copies:", error)
+            alert("An error occurred while creating the book copies")
         } finally {
             setCreating(false)
         }
@@ -790,67 +856,213 @@ function CreateCopyModal({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 light-mode:bg-white rounded-lg p-6 w-full max-w-md">
-                <h2 className="text-xl font-bold mb-4">Create New Book Copy</h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Book Title *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.bookTitle}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    bookTitle: e.target.value,
-                                }))
-                            }
-                            placeholder="Enter book title"
-                            className="w-full p-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Condition
-                        </label>
-                        <select
-                            value={formData.condition}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    condition: e.target.value as any,
-                                }))
-                            }
-                            className="w-full p-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="NEW">New</option>
-                            <option value="GOOD">Good</option>
-                            <option value="WORN">Worn</option>
-                            <option value="DAMAGED">Damaged</option>
-                        </select>{" "}
-                    </div>
-
-                    <div className="flex gap-3 mt-6">
+            <div className="bg-gray-800 light-mode:bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    {step === "details" && (
                         <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg"
+                            onClick={() => setStep("search")}
+                            className="p-1 hover:bg-gray-700 light-mode:hover:bg-gray-100 rounded"
                         >
-                            Cancel
+                            <ArrowLeft className="w-5 h-5" />
                         </button>
-                        <button
-                            type="submit"
-                            disabled={creating}
-                            className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50"
-                        >
-                            {creating ? "Creating..." : "Create Copy"}
-                        </button>
+                    )}
+                    Create New Book Cop{formData.quantity === 1 ? 'y' : 'ies'}
+                </h2>
+
+                {step === "search" ? (
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* Search Input */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Search for Book Title *
+                            </label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search by title, ISBN, or author..."
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    autoFocus
+                                />
+                                {searching && (
+                                    <RefreshCw className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Search Results */}
+                        <div className="flex-1 overflow-y-auto">
+                            {loading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                                    <span>Loading book titles...</span>
+                                </div>
+                            ) : filteredTitles.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400 light-mode:text-gray-600">
+                                    <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                    <p>{searchTerm ? "No books found matching your search" : "No book titles available"}</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {filteredTitles.map((book) => (
+                                        <div
+                                            key={book.id}
+                                            onClick={() => handleBookSelect(book)}
+                                            className="p-4 border border-gray-600 light-mode:border-gray-300 rounded-lg hover:bg-gray-700 light-mode:hover:bg-gray-50 cursor-pointer transition-colors"
+                                        >
+                                            <div className="flex gap-4">
+                                                {/* Book Cover */}
+                                                <div className="w-16 h-20 bg-gray-600 light-mode:bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                                    {book.imageUrl ? (
+                                                        <img
+                                                            src={book.imageUrl}
+                                                            alt={book.title}
+                                                            className="w-full h-full object-cover rounded"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                target.style.display = 'none'
+                                                                target.nextElementSibling!.classList.remove('hidden')
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <BookOpen className={`w-8 h-8 text-gray-400 ${book.imageUrl ? 'hidden' : ''}`} />
+                                                </div>
+
+                                                {/* Book Details */}
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-sm mb-1 truncate">
+                                                        {book.title}
+                                                    </h3>
+                                                    <p className="text-xs text-gray-400 light-mode:text-gray-600 mb-1">
+                                                        By: {book.authorNames.join(", ")}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 light-mode:text-gray-600 mb-2">
+                                                        ISBN: {book.isbn}
+                                                    </p>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-sm font-medium text-green-400">
+                                                            {book.price ? Number(book.price).toLocaleString() : "N/A"}₫
+                                                        </span>
+                                                        <div className="text-xs text-gray-400 light-mode:text-gray-600">
+                                                            {book.availableCopies}/{book.totalCopies} available
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 mt-4 pt-4 border-t border-gray-600 light-mode:border-gray-300">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
-                </form>
+                ) : (
+                    /* Details Step */
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Selected Book Display */}
+                        <div className="p-4 bg-gray-700 light-mode:bg-gray-100 rounded-lg">
+                            <label className="block text-sm font-medium mb-2">
+                                Selected Book
+                            </label>
+                            <div className="flex gap-4">
+                                <div className="w-16 h-20 bg-gray-600 light-mode:bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                    {selectedBook?.imageUrl ? (
+                                        <img
+                                            src={selectedBook.imageUrl}
+                                            alt={selectedBook.title}
+                                            className="w-full h-full object-cover rounded"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement
+                                                target.style.display = 'none'
+                                                target.nextElementSibling!.classList.remove('hidden')
+                                            }}
+                                        />
+                                    ) : null}
+                                    <BookOpen className={`w-8 h-8 text-gray-400 ${selectedBook?.imageUrl ? 'hidden' : ''}`} />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-semibold mb-1">{selectedBook?.title}</h3>
+                                    <p className="text-sm text-gray-400 light-mode:text-gray-600 mb-1">
+                                        By: {selectedBook?.authorNames.join(", ")}
+                                    </p>
+                                    <p className="text-sm text-gray-400 light-mode:text-gray-600">
+                                        Price: {selectedBook?.price ? Number(selectedBook.price).toLocaleString() : "N/A"}₫
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quantity Input */}
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Number of Copies to Create *
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="50"
+                                value={formData.quantity}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        quantity: parseInt(e.target.value) || 1,
+                                    }))
+                                }
+                                className="w-full p-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                required
+                            />
+                        </div>
+
+                        {/* Condition Selection */}
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Condition
+                            </label>
+                            <select
+                                value={formData.condition}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        condition: e.target.value as any,
+                                    }))
+                                }
+                                className="w-full p-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="NEW">New</option>
+                                <option value="GOOD">Good</option>
+                                <option value="WORN">Worn</option>
+                                <option value="DAMAGED">Damaged</option>
+                            </select>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => setStep("search")}
+                                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg"
+                            >
+                                Back to Search
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={creating}
+                                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50"
+                            >
+                                {creating ? "Creating..." : `Create ${formData.quantity} Cop${formData.quantity === 1 ? 'y' : 'ies'}`}
+                            </button>
+                        </div>
+                    </form>
+                )}
             </div>
         </div>
     )

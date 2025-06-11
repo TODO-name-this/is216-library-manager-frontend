@@ -242,7 +242,7 @@ function InventoryManagement() {
 
         try {
             setProcessing(true)
-            const response = await bookCopyAPI.deleteBookCopy(parseInt(copyId))
+            const response = await bookCopyAPI.deleteBookCopy(copyId)
 
             if (response.error) {
                 alert(`Failed to delete book copy: ${response.error.error}`)

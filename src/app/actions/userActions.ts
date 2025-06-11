@@ -21,7 +21,7 @@ export async function getAllUsers(): Promise<User[]> {
     }
 }
 
-export async function getUserById(id: number): Promise<User | null> {
+export async function getUserById(id: string): Promise<User | null> {
     try {
         const response = await userAPI.getUserById(id)
         if (response.error) {
@@ -52,7 +52,7 @@ export async function createUser(
 }
 
 export async function updateUser(
-    id: number,
+    id: string,
     userData: UpdateUserRequest
 ): Promise<User | null> {
     try {

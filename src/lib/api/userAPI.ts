@@ -18,7 +18,7 @@ export const userAPI = {
             }
         }
     }, // Get user by ID
-    getUserById: async (id: number): Promise<ApiResponse<User>> => {
+    getUserById: async (id: string): Promise<ApiResponse<User>> => {
         try {
             const response = await fetchWrapper.get(`/user/${id}`)
             return { data: response }
@@ -43,7 +43,7 @@ export const userAPI = {
 
     // Update user
     updateUser: async (
-        id: number,
+        id: string,
         userData: UpdateUserRequest
     ): Promise<ApiResponse<User>> => {
         try {

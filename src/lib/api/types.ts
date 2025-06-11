@@ -165,6 +165,7 @@ export interface ApiError {
 export interface CreateUserRequest {
     cccd: string
     name: string
+    email: string
     password: string
     role: "ADMIN" | "LIBRARIAN" | "USER"
 }
@@ -173,6 +174,7 @@ export interface UpdateUserRequest {
     name?: string
     password?: string
     role?: "ADMIN" | "LIBRARIAN" | "USER"
+    balance: number
 }
 
 export interface CreateBookTitleRequest {

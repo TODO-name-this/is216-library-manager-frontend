@@ -1,5 +1,5 @@
 import { fetchWrapper } from "../fetchWrapper"
-import { BookCopy, CreateBookCopyRequest, ApiResponse, UpdateBookCopyRequest } from "./types"
+import { BookCopy, BookCopyWithDueInfo, CreateBookCopyRequest, ApiResponse, UpdateBookCopyRequest } from "./types"
 
 export const bookCopyAPI = {
     // Get all book copies
@@ -67,6 +67,46 @@ export const bookCopyAPI = {
         } catch (error: any) {
             return {
                 error: { error: error.message || "Failed to update book copy" },
+            }
+        }
+    },
+
+    // Get all book copies with due information
+    getAllBookCopiesWithDueInfo: async (): Promise<ApiResponse<BookCopyWithDueInfo[]>> => {
+        try {
+            const response = await fetchWrapper.get("/bookCopy/all")
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: {
+                    error: error.message || "Failed to fetch book copies with due info",
+                },
+            }
+        }
+    },
+
+    // Get overdue book copies
+    getOverdueBookCopies: async (): Promise<ApiResponse<BookCopyWithDueInfo[]>> => {
+        try {
+            const response = await fetchWrapper.get("/bookCopy/overdue")
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: {
+                    error: error.message || "Failed to fetch overdue book copies",
+                },
+            }
+        }
+    },
+
+    // Get book copy by ID with due information
+    getBookCopyWithDueInfo: async (bookCopyId: string): Promise<ApiResponse<BookCopyWithDueInfo>> => {
+        try {
+            const response = await fetchWrapper.get(`/bookCopy/overdue/${bookCopyId}`)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to fetch book copy with due info" },
             }
         }
     },

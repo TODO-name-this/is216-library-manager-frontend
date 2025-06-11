@@ -49,6 +49,22 @@ export interface BookCopy {
     borrowerId: string | null
 }
 
+export interface BookCopyWithDueInfo {
+    bookCopyId: string
+    status: string
+    condition: string
+    bookTitle: string
+    bookTitleId: string
+    bookPhotoUrl?: string
+    bookPrice?: number
+    dueDate: string | null
+    borrowDate: string | null
+    borrowerId: string | null
+    borrowerName: string | null
+    borrowerCccd: string | null 
+    isOverdue: boolean
+}
+
 export interface Author {
     id: string
     name: string

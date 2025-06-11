@@ -464,9 +464,7 @@ function LabelManagement() {
                                                             `Book ID: ${copy.bookTitleId}`}
                                                     </p>
                                                     <p className="text-sm text-gray-400 light-mode:text-gray-500">
-                                                        Price: $
-                                                        {copy.bookPrice ||
-                                                            "N/A"}
+                                                        Price: {copy.bookPrice ? Number(copy.bookPrice).toLocaleString() : "N/A"}₫
                                                     </p>
                                                 </div>
                                             </td>
@@ -818,7 +816,7 @@ function LabelPreviewModal({
                                 )}
                                 {settings.includeISBN && (
                                     <div className="text-xs text-gray-600">
-                                        Price: ${copy.bookPrice || "N/A"}
+                                        Price: {copy.bookPrice ? Number(copy.bookPrice).toLocaleString() : "N/A"}₫
                                     </div>
                                 )}
                             </div>

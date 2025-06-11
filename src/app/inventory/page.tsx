@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { bookCopyAPI } from "@/lib/api"
-import { BookCopy } from "@/lib/api/types"
+import { BookCopyWithDueInfo } from "@/lib/api/types"
 import {
     Search,
     Filter,
@@ -20,6 +20,7 @@ import {
     Upload,
     BarChart3,
     RefreshCw,
+    CircleEllipsis,
 } from "lucide-react"
 
 export default function InventoryPage() {
@@ -32,8 +33,8 @@ export default function InventoryPage() {
 
 function InventoryManagement() {
     const { user } = useAuth()
-    const [bookCopies, setBookCopies] = useState<BookCopy[]>([])
-    const [filteredCopies, setFilteredCopies] = useState<BookCopy[]>([])
+    const [bookCopies, setBookCopies] = useState<BookCopyWithDueInfo[]>([])
+    const [filteredCopies, setFilteredCopies] = useState<BookCopyWithDueInfo[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     // Filters and search
@@ -48,8 +49,9 @@ function InventoryManagement() {
         reserved: 0,
         maintenance: 0,
         lost: 0,
+        overdue: 0,
     }) // Modal states
-    const [selectedCopy, setSelectedCopy] = useState<BookCopy | null>(null)
+    const [selectedCopy, setSelectedCopy] = useState<BookCopyWithDueInfo | null>(null)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [processing, setProcessing] = useState(false)
@@ -59,8 +61,8 @@ function InventoryManagement() {
             setLoading(true)
             setError(null)
 
-            // Fetch enhanced book copies (now includes book title and borrower info)
-            const copiesResult = await bookCopyAPI.getBookCopies()
+            // Fetch enhanced book copies with due information
+            const copiesResult = await bookCopyAPI.getAllBookCopiesWithDueInfo()
 
             // Check for API errors
             if (copiesResult.error) {
@@ -75,22 +77,24 @@ function InventoryManagement() {
 
             setBookCopies(copiesData)
 
-            // Calculate statistics (include RESERVED status)
+            // Calculate statistics including overdue
             const newStats = {
                 total: copiesData.length,
                 available: copiesData.filter(
-                    (c: BookCopy) => c.status === "AVAILABLE"
+                    (c: BookCopyWithDueInfo) => c.status === "AVAILABLE"
                 ).length,
                 borrowed: copiesData.filter(
-                    (c: BookCopy) => c.status === "BORROWED"
+                    (c: BookCopyWithDueInfo) => c.status === "BORROWED" && !c.isOverdue
                 ).length,
                 reserved: copiesData.filter(
-                    (c: BookCopy) => c.status === "RESERVED"
+                    (c: BookCopyWithDueInfo) => c.status === "RESERVED"
                 ).length,
                 maintenance: copiesData.filter(
-                    (c: BookCopy) => c.status === "MAINTENANCE"
+                    (c: BookCopyWithDueInfo) => c.status === "MAINTENANCE"
                 ).length,
-                lost: copiesData.filter((c: BookCopy) => c.status === "LOST")
+                lost: copiesData.filter((c: BookCopyWithDueInfo) => c.status === "LOST")
+                    .length,
+                overdue: copiesData.filter((c: BookCopyWithDueInfo) => c.isOverdue)
                     .length,
             }
             setStats(newStats)
@@ -106,11 +110,11 @@ function InventoryManagement() {
         fetchData()
     }, []) // Filter logic
     useEffect(() => {
-        let filtered = bookCopies // Search filter - now supports book title and borrower name search
+        let filtered = bookCopies // Search filter - now supports book title, borrower name, and CCCD search
         if (searchTerm) {
             filtered = filtered.filter(
                 (copy) =>
-                    copy.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    copy.bookCopyId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     (copy.bookTitle &&
                         copy.bookTitle
                             .toLowerCase()
@@ -126,9 +130,13 @@ function InventoryManagement() {
             )
         }
 
-        // Status filter
+        // Status filter - handle overdue separately
         if (statusFilter !== "ALL") {
-            filtered = filtered.filter((copy) => copy.status === statusFilter)
+            if (statusFilter === "OVERDUE") {
+                filtered = filtered.filter((copy) => copy.isOverdue)
+            } else {
+                filtered = filtered.filter((copy) => copy.status === statusFilter && !copy.isOverdue)
+            }
         }
 
         // Condition filter
@@ -141,25 +149,33 @@ function InventoryManagement() {
         setFilteredCopies(filtered)
     }, [bookCopies, searchTerm, statusFilter, conditionFilter])
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
+    const getStatusIcon = (copy: BookCopyWithDueInfo) => {
+        if (copy.isOverdue) {
+            return <AlertCircle className="w-4 h-4 text-red-500" />
+        }
+        
+        switch (copy.status) {
             case "AVAILABLE":
                 return <CheckCircle2 className="w-4 h-4 text-green-500" />
             case "BORROWED":
-                return <AlertCircle className="w-4 h-4 text-blue-500" />
+                return <CircleEllipsis className="w-4 h-4 text-blue-500" />
             case "RESERVED":
                 return <Package className="w-4 h-4 text-purple-500" />
             case "MAINTENANCE":
                 return <Wrench className="w-4 h-4 text-yellow-500" />
             case "LOST":
-                return <XCircle className="w-4 h-4 text-red-500" />
+                return <XCircle className="w-4 h-4 text-white" />
             default:
                 return <Package className="w-4 h-4 text-gray-500" />
         }
     }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
+    const getStatusColor = (copy: BookCopyWithDueInfo) => {
+        if (copy.isOverdue) {
+            return "bg-red-100 text-red-800 light-mode:bg-red-100"
+        }
+        
+        switch (copy.status) {
             case "AVAILABLE":
                 return "bg-green-100 text-green-800 light-mode:bg-green-100"
             case "BORROWED":
@@ -169,10 +185,14 @@ function InventoryManagement() {
             case "MAINTENANCE":
                 return "bg-yellow-100 text-yellow-800 light-mode:bg-yellow-100"
             case "LOST":
-                return "bg-red-100 text-red-800 light-mode:bg-red-100"
+                return "bg-red-600 text-white light-mode:bg-red-600 light-mode:text-white"
             default:
                 return "bg-gray-100 text-gray-800 light-mode:bg-gray-100"
         }
+    }
+
+    const getDisplayStatus = (copy: BookCopyWithDueInfo) => {
+        return copy.isOverdue ? "OVERDUE" : copy.status
     }
 
     const getConditionColor = (condition: string) => {
@@ -190,7 +210,7 @@ function InventoryManagement() {
         }
     }
 
-    const handleEditCopy = (copy: BookCopy) => {
+    const handleEditCopy = (copy: BookCopyWithDueInfo) => {
         setSelectedCopy(copy)
         setShowEditModal(true)
     }
@@ -270,7 +290,7 @@ function InventoryManagement() {
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
                     <div className="bg-gray-800 light-mode:bg-white rounded-lg p-6 border border-gray-700 light-mode:border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
@@ -309,7 +329,21 @@ function InventoryManagement() {
                                     {stats.borrowed}
                                 </p>
                             </div>
-                            <AlertCircle className="w-8 h-8 text-blue-500" />
+                            <CircleEllipsis className="w-8 h-8 text-blue-500" />
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-800 light-mode:bg-white rounded-lg p-6 border border-gray-700 light-mode:border-gray-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-400 light-mode:text-gray-600">
+                                    Overdue
+                                </p>
+                                <p className="text-2xl font-bold text-red-500">
+                                    {stats.overdue}
+                                </p>
+                            </div>
+                            <AlertCircle className="w-8 h-8 text-red-500" />
                         </div>
                     </div>
 
@@ -370,6 +404,7 @@ function InventoryManagement() {
                             <option value="ALL">All Status</option>
                             <option value="AVAILABLE">Available</option>
                             <option value="BORROWED">Borrowed</option>
+                            <option value="OVERDUE">Overdue</option>
                             <option value="MAINTENANCE">Maintenance</option>
                             <option value="LOST">Lost</option>
                         </select>
@@ -459,14 +494,14 @@ function InventoryManagement() {
                                 ) : (
                                     filteredCopies.map((copy) => (
                                         <tr
-                                            key={copy.id}
+                                            key={copy.bookCopyId}
                                             className="hover:bg-gray-700 light-mode:hover:bg-gray-50"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <Package className="w-4 h-4 mr-2 text-gray-400" />
                                                     <span className="font-mono text-sm">
-                                                        {copy.id}
+                                                        {copy.bookCopyId}
                                                     </span>
                                                 </div>
                                             </td>
@@ -477,21 +512,19 @@ function InventoryManagement() {
                                                             `Book ID: ${copy.bookTitleId}`}
                                                     </p>
                                                     <p className="text-sm text-gray-400 light-mode:text-gray-500">
-                                                        Price: $
-                                                        {copy.bookPrice ||
-                                                            "N/A"}
+                                                        Price: {copy.bookPrice ? Number(copy.bookPrice).toLocaleString() : "N/A"}₫
                                                     </p>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                                        copy.status
+                                                        copy
                                                     )}`}
                                                 >
-                                                    {getStatusIcon(copy.status)}
+                                                    {getStatusIcon(copy)}
                                                     <span className="ml-1">
-                                                        {copy.status}
+                                                        {getDisplayStatus(copy)}
                                                     </span>
                                                 </span>
                                             </td>
@@ -516,7 +549,7 @@ function InventoryManagement() {
                                                             <span className="text-xs text-gray-400 light-mode:text-gray-500">
                                                                 CCCD:{" "}
                                                                 {
-                                                                    copy.borrowerCccd
+                                                                    copy.borrowerCccd || "N/A"
                                                                 }
                                                             </span>
                                                         </>
@@ -541,7 +574,7 @@ function InventoryManagement() {
                                                     <button
                                                         onClick={() =>
                                                             handleDeleteCopy(
-                                                                copy.id
+                                                                copy.bookCopyId
                                                             )
                                                         }
                                                         disabled={processing}
@@ -596,13 +629,13 @@ function EditCopyModal({
     onClose,
     onSave,
 }: {
-    copy: BookCopy
+    copy: BookCopyWithDueInfo
     onClose: () => void
     onSave: () => void
 }) {
     const [formData, setFormData] = useState({
-        status: copy.status,
-        condition: copy.condition,
+        status: copy.status as "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST",
+        condition: copy.condition as "NEW" | "GOOD" | "WORN" | "DAMAGED",
     })
     const [saving, setSaving] = useState(false)
 
@@ -611,7 +644,7 @@ function EditCopyModal({
         setSaving(true)
 
         try {
-            const response = await bookCopyAPI.updateBookCopy(copy.id, formData)
+            const response = await bookCopyAPI.updateBookCopy(copy.bookCopyId, formData)
 
             if (response.data) {
                 alert("Book copy updated successfully!")
@@ -640,7 +673,7 @@ function EditCopyModal({
                         </label>
                         <input
                             type="text"
-                            value={copy.id}
+                            value={copy.bookCopyId}
                             disabled
                             className="w-full p-3 bg-gray-700 light-mode:bg-gray-100 border border-gray-600 light-mode:border-gray-300 rounded-lg opacity-50"
                         />

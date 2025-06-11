@@ -213,7 +213,7 @@ function ReservedBooks() {
                                 <td className="px-4 py-3 text-blue-300 font-medium">
                                     {item.reservation.bookTitle ||
                                         "Unknown Title"}
-                                </td>{" "}
+                                </td>
                                 <td className="px-4 py-3 text-gray-400">
                                     {item.reservation.bookAuthors?.join(", ") ||
                                         "Unknown"}

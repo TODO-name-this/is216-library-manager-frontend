@@ -277,11 +277,11 @@ function AddBookPage() {
             }
 
             const newBook = await createBook(bookData)
-            if (newBook) {
+            if (newBook.data) {
                 alert("Book added successfully!")
                 router.push("/books")
             } else {
-                alert("Failed to add book")
+                alert("Failed to add book: " + newBook.error?.error)
             }
         } catch (error) {
             console.error("Error adding book:", error)

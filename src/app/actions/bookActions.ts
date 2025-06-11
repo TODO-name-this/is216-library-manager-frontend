@@ -1,7 +1,7 @@
 "use client"
 
 import { bookTitleAPI, bookCopyAPI } from "@/lib/api"
-import { BookTitle, BookCopy } from "@/lib/api/types"
+import { BookTitle, BookCopy, ApiResponse } from "@/lib/api/types"
 
 export async function getAllBooks(): Promise<BookTitle[]> {
     try {
@@ -58,13 +58,12 @@ export async function createBook(bookData: {
     maxOnlineReservations: number
     authorIds: string[]
     categoryIds: string[]
-}): Promise<BookTitle | null> {
+}): Promise<ApiResponse<BookTitle>> {
     const response = await bookTitleAPI.createBookTitle(bookData)
     if (response.error) {
-        console.error("Failed to create book:", response.error)
-        return null
+        console.error("Failed to create book:", response)
     }
-    return response.data || null
+    return response
 }
 
 export async function updateBook(

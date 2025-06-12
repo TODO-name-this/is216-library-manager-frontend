@@ -180,10 +180,14 @@ export interface ApiError {
 // Request Types for Create/Update operations
 export interface CreateUserRequest {
     cccd: string
+    dob?: string  // Optional LocalDate (past date)
+    avatarUrl?: string  // Optional URL
     name: string
+    phone?: string  // Optional 10-15 digits
     email: string
     password: string
     role: "ADMIN" | "LIBRARIAN" | "USER"
+    balance: number  // Min 0
 }
 
 export interface UpdateUserRequest {

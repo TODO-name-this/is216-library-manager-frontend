@@ -40,7 +40,8 @@ export default function Header() {
                         }`}
                     >
                         Authors
-                    </Link>                    {/* Show Reserved and Transactions only to authenticated users */}
+                    </Link>{" "}
+                    {/* Show Reserved and Transactions only to authenticated users */}
                     {isAuthenticated && (
                         <>
                             {/* For regular users, show separate Reserved tab */}
@@ -55,7 +56,7 @@ export default function Header() {
                                 >
                                     Reserved
                                 </Link>
-                            )}
+                            )}{" "}
                             <Link
                                 href="/transactions"
                                 className={`px-3 py-1 rounded-md transition-colors ${
@@ -65,6 +66,16 @@ export default function Header() {
                                 }`}
                             >
                                 Transactions
+                            </Link>
+                            <Link
+                                href="/account"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/account")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Account
                             </Link>
                         </>
                     )}
@@ -80,17 +91,20 @@ export default function Header() {
                                 }`}
                             >
                                 Users
-                            </Link>                            {/* Combined Reservations tab for ADMIN/LIBRARIAN */}
+                            </Link>{" "}
+                            {/* Combined Reservations tab for ADMIN/LIBRARIAN */}
                             <Link
                                 href="/workflow"
                                 className={`px-3 py-1 rounded-md transition-colors ${
-                                    pathname.startsWith("/workflow") || pathname.startsWith("/reserved")
+                                    pathname.startsWith("/workflow") ||
+                                    pathname.startsWith("/reserved")
                                         ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
                                         : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
                                 }`}
                             >
                                 Reservations
-                            </Link><Link
+                            </Link>
+                            <Link
                                 href="/inventory"
                                 className={`px-3 py-1 rounded-md transition-colors ${
                                     pathname.startsWith("/inventory")
@@ -99,7 +113,8 @@ export default function Header() {
                                 }`}
                             >
                                 Inventory
-                            </Link>                            <Link
+                            </Link>{" "}
+                            <Link
                                 href="/returns"
                                 className={`px-3 py-1 rounded-md transition-colors ${
                                     pathname.startsWith("/returns")
@@ -107,7 +122,18 @@ export default function Header() {
                                         : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
                                 }`}
                             >
-                                Returns                            </Link>
+                                Returns
+                            </Link>
+                            <Link
+                                href="/statistics"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/statistics")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Statistics
+                            </Link>
                         </>
                     )}
                 </div>

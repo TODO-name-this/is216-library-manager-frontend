@@ -5,6 +5,8 @@ import type {
     User,
     CreateUserRequest,
     UpdateUserRequest,
+    SelfUpdateUserRequest,
+    LibrarianUpdateUserRequest,
 } from "@/lib/api/types"
 
 export async function getAllUsers(): Promise<User[]> {
@@ -68,7 +70,42 @@ export async function updateUser(
     }
 }
 
-export async function deleteUser(id: number): Promise<boolean> {
+// New action for self-update (users updating their own profile)
+export async function updateSelf(
+    userData: SelfUpdateUserRequest
+): Promise<User | null> {
+    try {
+        const response = await userAPI.updateSelf(userData)
+        if (response.error) {
+            console.error("Failed to update profile:", response.error)
+            return null
+        }
+        return response.data || null
+    } catch (error) {
+        console.error("Error updating profile:", error)
+        throw error
+    }
+}
+
+// New action for role-based updates (admins/librarians updating other users)
+export async function updateUserByRole(
+    id: string,
+    userData: LibrarianUpdateUserRequest
+): Promise<User | null> {
+    try {
+        const response = await userAPI.updateUserByRole(id, userData)
+        if (response.error) {
+            console.error("Failed to update user:", response.error)
+            return null
+        }
+        return response.data || null
+    } catch (error) {
+        console.error("Error updating user:", error)
+        throw error
+    }
+}
+
+export async function deleteUser(id: string): Promise<boolean> {
     try {
         const response = await userAPI.deleteUser(id)
         if (response.error) {

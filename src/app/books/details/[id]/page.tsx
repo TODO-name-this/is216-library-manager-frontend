@@ -13,7 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { BookTitle, Review } from "@/lib/api/types";
-import { getBookById } from "@/app/actions/bookActions";
+import { getBookById, deleteBook } from "@/app/actions/bookActions";
 import { createReservation } from "@/app/actions/reservationActions";
 import { createReview } from "@/app/actions/reviewActions";
 import { useAuth } from "@/lib/AuthContext";
@@ -171,6 +171,31 @@ export default function BookDetailsPage() {
     }
   };
 
+  const handleDeleteBook = async () => {
+    if (!book) return;
+
+    // Show confirmation dialog
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the book "${book.title}"? This action cannot be undone and will also delete all related book copies, reservations, and reviews.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const success = await deleteBook(book.id);
+      
+      if (success) {
+        alert("Book deleted successfully!");
+        router.push("/books"); // Redirect to books list
+      } else {
+        alert("Failed to delete book. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      alert("An error occurred while deleting the book.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 p-6">
@@ -261,23 +286,19 @@ export default function BookDetailsPage() {
             {/* Book image + info */}
             <div className="flex flex-col space-y-6 md:flex-row md:space-y-0 md:space-x-8">
               <div className="flex flex-col items-center space-y-4 flex-shrink-0">
-                {book.imageUrl ? (
-                  <img
-                    className="h-auto w-78 rounded shadow-lg"
-                    src={book.imageUrl}
-                    alt={book.title}
-                    onError={(e) => {
-                      const img = e.currentTarget as HTMLImageElement;
-                      const text = encodeURIComponent(book.title);
-                      img.src = `https://via.placeholder.com/256x384/374151/9ca3af?text=${text}`;
-                    }}
-                  />
-                ) : (
-                  <div className="h-96 w-78 rounded shadow-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center">
+                {/* Box for missing image placeholder */}
+                <div className="w-78 min-h-96 rounded shadow-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center m-0">
+                  {book.imageUrl ? (
+                    <img
+                      className="w-full h-auto object-contain text-center"
+                      src={book.imageUrl}
+                      alt={book.title + " cover image"}
+                    />
+                  ) : (
                     <Book className="w-20 h-20 text-gray-400" />
-                  </div>
-                )}{" "}
-                <div className="flex space-x-3">
+                  )}
+                </div>
+                <div className="flex space-x-3 mt-5">
                   {(isAdmin() || isLibrarian()) && (
                     <>
                       <Link
@@ -286,14 +307,17 @@ export default function BookDetailsPage() {
                       >
                         Edit
                       </Link>
-                      <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium">
+                      <button 
+                        onClick={handleDeleteBook}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium"
+                      >
                         Delete
                       </button>
                     </>
                   )}
                 </div>
               </div>
-              <div className="flex flex-col justify-center space-y-4">
+              <div className="flex flex-col justify-top mt-4 space-y-4">
                 <h2 className="text-3xl font-bold">{book.title}</h2>{" "}
                 <p>
                   <strong>Author:</strong>{" "}

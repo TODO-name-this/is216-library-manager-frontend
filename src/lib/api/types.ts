@@ -9,8 +9,10 @@ export interface User {
     role: "ADMIN" | "LIBRARIAN" | "USER"
     balance: number
     cccd: string
-    phoneNumber: string
-    address: string
+    phoneNumber?: string // Keep as phoneNumber to match existing backend
+    phone?: string // Add phone as alias for the new API
+    dob?: string // Date of birth as ISO string
+    avatarUrl?: string // Profile picture URL
 }
 
 export interface BookTitle {
@@ -38,7 +40,7 @@ export interface BookTitle {
 export interface BookCopy {
     id: string
     bookTitleId: string
-    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST"
+    status: "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST"
     condition: "NEW" | "GOOD" | "WORN" | "DAMAGED"
     // Enhanced fields from new API
     bookTitle: string
@@ -47,6 +49,22 @@ export interface BookCopy {
     borrowerCccd: string | null
     borrowerName: string | null
     borrowerId: string | null
+}
+
+export interface BookCopyWithDueInfo {
+    bookCopyId: string
+    status: string
+    condition: string
+    bookTitle: string
+    bookTitleId: string
+    bookPhotoUrl?: string
+    bookPrice?: number
+    dueDate: string | null
+    borrowDate: string | null
+    borrowerId: string | null
+    borrowerName: string | null
+    borrowerCccd: string | null 
+    isOverdue: boolean
 }
 
 export interface Author {
@@ -164,17 +182,47 @@ export interface ApiError {
 // Request Types for Create/Update operations
 export interface CreateUserRequest {
     cccd: string
+    dob?: string  // Optional LocalDate (past date)
+    avatarUrl?: string  // Optional URL
     name: string
+    phone?: string  // Optional 10-15 digits
     email: string
     password: string
     role: "ADMIN" | "LIBRARIAN" | "USER"
+    balance: number  // Min 0
 }
 
 export interface UpdateUserRequest {
+    cccd?: string
+    dob?: string // LocalDate as ISO string
+    avatarUrl?: string
     name?: string
-    password?: string
+    phone?: string
+    email?: string
+    oldPassword?: string
+    newPassword?: string
     role?: "ADMIN" | "LIBRARIAN" | "USER"
-    balance: number
+    balance?: number
+}
+
+// New interfaces for the updated API endpoints
+export interface SelfUpdateUserRequest {
+    name?: string
+    email?: string
+    phone?: string
+    dob?: string // LocalDate as ISO string
+    avatarUrl?: string
+}
+
+export interface LibrarianUpdateUserRequest {
+    cccd?: string
+    name?: string
+    email?: string
+    phone?: string
+    dob?: string // LocalDate as ISO string
+    avatarUrl?: string
+    balance?: number
+    role?: "ADMIN" | "LIBRARIAN" | "USER" // Note: role restrictions apply based on user's role
 }
 
 export interface CreateBookTitleRequest {
@@ -272,11 +320,12 @@ export interface AssignCopyToReservationRequest {
 
 export interface CreateBookCopyRequest {
     bookTitleId: string
+    quantity: number
     condition?: "NEW" | "GOOD" | "WORN" | "DAMAGED"
 }
 
 export interface UpdateBookCopyRequest {
-    status?: "AVAILABLE" | "BORROWED" | "RESERVED" | "MAINTENANCE" | "LOST"
+    status?: "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST"
     condition?: "NEW" | "GOOD" | "WORN" | "DAMAGED"
 }
 

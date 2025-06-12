@@ -19,7 +19,7 @@ export const bookCopyAPI = {
     // Get book copy by ID
     getBookCopyById: async (id: number): Promise<ApiResponse<BookCopy>> => {
         try {
-            const response = await fetchWrapper.get(`/api/bookCopy/${id}`)
+            const response = await fetchWrapper.get(`/bookCopy/${id}`)
             return { data: response }
         } catch (error: any) {
             return {
@@ -44,10 +44,11 @@ export const bookCopyAPI = {
             }
         }
     },
+
     // Delete book copy
-    deleteBookCopy: async (id: number): Promise<ApiResponse<void>> => {
+    deleteBookCopy: async (id: string): Promise<ApiResponse<void>> => {
         try {
-            await fetchWrapper.del(`/api/bookCopy/${id}`)
+            await fetchWrapper.del(`/bookCopy/${id}`)
             return { data: undefined }
         } catch (error: any) {
             return {

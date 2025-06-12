@@ -117,7 +117,7 @@ export async function getBookCopyById(id: number): Promise<BookCopy | null> {
     return response.data || null
 }
 
-export async function deleteBookCopy(id: number): Promise<boolean> {
+export async function deleteBookCopy(id: string): Promise<boolean> {
     const response = await bookCopyAPI.deleteBookCopy(id)
     if (response.error) {
         console.error("Failed to delete book copy:", response.error)

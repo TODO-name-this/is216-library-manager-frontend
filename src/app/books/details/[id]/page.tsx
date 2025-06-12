@@ -13,7 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { BookTitle, Review } from "@/lib/api/types";
-import { getBookById } from "@/app/actions/bookActions";
+import { getBookById, deleteBook } from "@/app/actions/bookActions";
 import { createReservation } from "@/app/actions/reservationActions";
 import { createReview } from "@/app/actions/reviewActions";
 import { useAuth } from "@/lib/AuthContext";
@@ -171,6 +171,31 @@ export default function BookDetailsPage() {
     }
   };
 
+  const handleDeleteBook = async () => {
+    if (!book) return;
+
+    // Show confirmation dialog
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the book "${book.title}"? This action cannot be undone and will also delete all related book copies, reservations, and reviews.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const success = await deleteBook(book.id);
+      
+      if (success) {
+        alert("Book deleted successfully!");
+        router.push("/books"); // Redirect to books list
+      } else {
+        alert("Failed to delete book. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      alert("An error occurred while deleting the book.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 p-6">
@@ -282,7 +307,10 @@ export default function BookDetailsPage() {
                       >
                         Edit
                       </Link>
-                      <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium">
+                      <button 
+                        onClick={handleDeleteBook}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium"
+                      >
                         Delete
                       </button>
                     </>

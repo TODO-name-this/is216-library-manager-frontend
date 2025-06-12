@@ -35,6 +35,8 @@ export interface BookTitle {
     maxOnlineReservations: number
     userReservationsForThisBook: number | null
     maxUserReservations: number | null
+    totalUserActiveReservations: number
+    maxGlobalUserReservations: 5
 }
 
 export interface BookCopy {
@@ -312,6 +314,7 @@ export interface CreateReservationRequest {
 export interface UpdateReservationRequest {
     bookCopyId?: string
     expirationDate?: string
+    status: string
 }
 
 export interface AssignCopyToReservationRequest {

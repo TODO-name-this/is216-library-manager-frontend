@@ -38,7 +38,7 @@ export async function getReservationById(
 }
 
 export async function getReservationsByUserId(
-    userId: number
+    userId: string
 ): Promise<Reservation[]> {
     try {
         const response = await reservationAPI.getReservationsByUserId(
@@ -114,7 +114,7 @@ export async function updateReservationStatus(
     }
 }
 
-export async function deleteReservation(id: number): Promise<boolean> {
+export async function deleteReservation(id: string): Promise<boolean> {
     try {
         const response = await reservationAPI.deleteReservation(id.toString())
         if (typeof response === "object" && "error" in response) {

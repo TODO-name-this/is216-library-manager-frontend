@@ -1,4 +1,4 @@
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const baseUrl = process.env.NEXT_PUBLIC_API_URL 
 
 // Get JWT token from localStorage
 function getAuthHeaders(): Record<string, string> {

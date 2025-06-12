@@ -945,55 +945,63 @@ function UserManagementPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-400">CCCD:</span>
-                    <span className="ml-2">{selectedUser.cccd || 'Not provided'}</span>
+                    <span className={`ml-2 ${selectedUser.cccd ? 'text-white' : 'text-gray-500'}`}>
+                      {selectedUser.cccd || 'N/A'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Email:</span>
-                    <span className="ml-2">{selectedUser.email}</span>
+                    <span className={`ml-2 ${selectedUser.email ? 'text-white' : 'text-gray-500'}`}>
+                      {selectedUser.email || 'N/A'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Phone:</span>
-                    <span className="ml-2">{selectedUser.phoneNumber || selectedUser.phone || 'Not provided'}</span>
+                    <span className={`ml-2 ${(selectedUser.phoneNumber || selectedUser.phone) ? 'text-white' : 'text-gray-500'}`}>
+                      {selectedUser.phoneNumber || selectedUser.phone || 'N/A'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Role:</span>
-                    <span className="ml-2">{selectedUser.role}</span>
+                    <span className="ml-2 text-white">{selectedUser.role}</span>
                   </div>
-                  {selectedUser.dob && (
-                    <div>
-                      <span className="text-gray-400">Date of Birth:</span>
-                      <span className="ml-2">{new Date(selectedUser.dob).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  {selectedUser.avatarUrl && (
-                    <div>
-                      <span className="text-gray-400">Avatar:</span>
-                      <span className="ml-2">
-                        <img 
-                          src={selectedUser.avatarUrl} 
-                          alt="User Avatar" 
-                          className="inline-block w-8 h-8 rounded-full ml-2"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        <a 
-                          href={selectedUser.avatarUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 underline ml-2"
-                        >
-                          View Image
-                        </a>
-                      </span>
-                    </div>
-                  )}
-                  {selectedUser.address && (
-                    <div className="md:col-span-2">
-                      <span className="text-gray-400">Address:</span>
-                      <span className="ml-2">{selectedUser.address}</span>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-gray-400">Date of Birth:</span>
+                    <span className={`ml-2 ${selectedUser.dob ? 'text-white' : 'text-gray-500'}`}>
+                      {selectedUser.dob ? new Date(selectedUser.dob).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Avatar:</span>
+                    <span className={`ml-2 ${selectedUser.avatarUrl ? 'text-white' : 'text-gray-500'}`}>
+                      {selectedUser.avatarUrl ? (
+                        <span className="flex items-center">
+                          <img 
+                            src={selectedUser.avatarUrl} 
+                            alt="User Avatar" 
+                            className="inline-block w-8 h-8 rounded-full"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <a 
+                            href={selectedUser.avatarUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline ml-2"
+                          >
+                            View Image
+                          </a>
+                        </span>
+                      ) : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="text-gray-400">Address:</span>
+                    <span className={`ml-2 ${selectedUser.address ? 'text-white' : 'text-gray-500'}`}>
+                      {selectedUser.address || 'N/A'}
+                    </span>
+                  </div>
                 </div>
               </div>{" "}
               {/* Reservations List */}

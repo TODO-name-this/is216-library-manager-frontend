@@ -4,19 +4,19 @@ import { useState } from "react";
 import { userAPI } from "@/lib/api/userAPI";
 import { CreateUserRequest } from "@/lib/api/types";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function CreateUserPage() {
+  const { user, isAdmin } = useAuth();
   const [formData, setFormData] = useState<CreateUserRequest>({
     cccd: "",
     name: "",
     email: "",
     password: "",
     role: "USER",
-  });
-
-  const [additionalInfo, setAdditionalInfo] = useState({
-    phoneNumber: "",
-    address: "",
+    dob: "",
+    phone: "",
+    avatarUrl: "",
     balance: 0,
   });
 
@@ -31,8 +31,8 @@ export default function CreateUserPage() {
     setSuccessMessage("");
 
     // Validation
-    if (!formData.cccd || !formData.name || !formData.password) {
-      setError("CCCD, name, and password are required");
+    if (!formData.cccd || !formData.name || !formData.email || !formData.password) {
+      setError("CCCD, name, email, and password are required");
       setIsSubmitting(false);
       return;
     }
@@ -43,14 +43,103 @@ export default function CreateUserPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!/^\d{12}$/.test(formData.cccd)) {
+      setError("CCCD must contain only digits");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError("Please enter a valid email address");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.phone && (formData.phone.length < 10 || formData.phone.length > 15)) {
+      setError("Phone number must be between 10 and 15 digits");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.phone && !/^\d+$/.test(formData.phone)) {
+      setError("Phone number must contain only digits");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.dob) {
+      const dobDate = new Date(formData.dob);
+      const today = new Date();
+      if (dobDate >= today) {
+        setError("Date of birth must be in the past");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    if (formData.balance < 0) {
+      setError("Balance must be positive or zero");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Role-based validation
+    if (!user) {
+      setError("Authentication required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Check if current user has permission to create the requested role
+    if (formData.role === "ADMIN") {
+      setError("Creating admin accounts is not allowed");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.role === "LIBRARIAN" && !isAdmin()) {
+      setError("Only admins can create librarian accounts");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.role === "USER" && !isAdmin() && user.role !== "LIBRARIAN") {
+      setError("Only admins and librarians can create user accounts");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const response = await userAPI.createUser(formData);
+      // Filter out empty/blank optional fields to avoid server validation issues
+      const requestData: Partial<CreateUserRequest> = {
+        cccd: formData.cccd,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        balance: formData.balance,
+      };
+
+      // Only include optional fields if they have values
+      if (formData.dob && formData.dob.trim() !== "") {
+        requestData.dob = formData.dob;
+      }
+      
+      if (formData.phone && formData.phone.trim() !== "") {
+        requestData.phone = formData.phone;
+      }
+      
+      if (formData.avatarUrl && formData.avatarUrl.trim() !== "") {
+        requestData.avatarUrl = formData.avatarUrl;
+      }
+
+      const response = await userAPI.createUser(requestData as CreateUserRequest);
 
       if (response.data) {
         setSuccessMessage(
@@ -63,12 +152,13 @@ export default function CreateUserPage() {
           email: "",
           password: "",
           role: "USER",
-        });
-        setAdditionalInfo({
-          phoneNumber: "",
-          address: "",
+          dob: "",
+          phone: "",
+          avatarUrl: "",
           balance: 0,
         });
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setError(response.error?.error || "Failed to create user");
       }
@@ -79,25 +169,38 @@ export default function CreateUserPage() {
     }
   };
 
-  const handleInputChange = (field: keyof CreateUserRequest, value: string) => {
+  const handleInputChange = (field: keyof CreateUserRequest, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const handleAdditionalInfoChange = (
-    field: keyof typeof additionalInfo,
-    value: string | number
-  ) => {
-    setAdditionalInfo((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // Get available roles based on current user's role
+  const getAvailableRoles = () => {
+    if (!user) return [];
+    
+    const roles = [];
+    
+    // Everyone can create USER accounts (if they have access to this page)
+    roles.push({ value: "USER", label: "User" });
+    
+    // Only admins can create LIBRARIAN accounts
+    if (isAdmin()) {
+      roles.push({ value: "LIBRARIAN", label: "Librarian" });
+    }
+    
+    // ADMIN accounts cannot be created through this interface
+    return roles;
+  };
+
+  // Check if current user can create accounts
+  const canCreateAccounts = () => {
+    return user && (isAdmin() || user.role === "LIBRARIAN");
   };
 
   return (
-    <ProtectedRoute requiredRole={["ADMIN"]}>
+    <ProtectedRoute requiredRole={["ADMIN", "LIBRARIAN"]}>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-100 mb-8">
@@ -135,8 +238,8 @@ export default function CreateUserPage() {
                     type="text"
                     value={formData.cccd}
                     onChange={(e) => handleInputChange("cccd", e.target.value)}
-                    maxLength={12}
-                    pattern="[0-9]{12}"
+                    maxLength={15}
+                    pattern="[0-9]{12,15}"
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter 12-digit CCCD"
                     required
@@ -162,6 +265,20 @@ export default function CreateUserPage() {
 
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
                     Password *
                   </label>
                   <input
@@ -170,13 +287,13 @@ export default function CreateUserPage() {
                     onChange={(e) =>
                       handleInputChange("password", e.target.value)
                     }
-                    minLength={6}
+                    minLength={8}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter password"
                     required
                   />
                   <p className="text-gray-400 text-xs mt-1">
-                    Minimum 6 characters
+                    Minimum 8 characters
                   </p>
                 </div>
 
@@ -195,10 +312,40 @@ export default function CreateUserPage() {
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="USER">User</option>
-                    <option value="LIBRARIAN">Librarian</option>
-                    <option value="ADMIN">Admin</option>
+                    {getAvailableRoles().map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
                   </select>
+                  {!isAdmin() && (
+                    <p className="text-gray-400 text-xs mt-1">
+                      {user?.role === "LIBRARIAN" 
+                        ? "Librarians can only create user accounts" 
+                        : "Limited role options based on your permissions"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Initial Balance *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.balance}
+                    onChange={(e) =>
+                      handleInputChange("balance", parseInt(e.target.value) || 0)
+                    }
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                    required
+                  />
+                  <p className="text-gray-400 text-xs mt-1">
+                    Starting balance (must be 0 or positive)
+                  </p>
                 </div>
               </div>
             </div>
@@ -212,15 +359,18 @@ export default function CreateUserPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
-                    Email
+                    Date of Birth
                   </label>
                   <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    type="date"
+                    value={formData.dob}
+                    onChange={(e) => handleInputChange("dob", e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter email address"
+                    max={new Date().toISOString().split('T')[0]}
                   />
+                  <p className="text-gray-400 text-xs mt-1">
+                    Must be in the past
+                  </p>
                 </div>
 
                 <div>
@@ -229,51 +379,28 @@ export default function CreateUserPage() {
                   </label>
                   <input
                     type="tel"
-                    value={additionalInfo.phoneNumber}
-                    onChange={(e) =>
-                      handleAdditionalInfoChange("phoneNumber", e.target.value)
-                    }
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    pattern="[0-9]{10,15}"
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter phone number"
                   />
+                  <p className="text-gray-400 text-xs mt-1">
+                    10-15 digits only
+                  </p>
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-gray-300 text-sm font-medium mb-2">
-                    Address
-                  </label>
-                  <textarea
-                    value={additionalInfo.address}
-                    onChange={(e) =>
-                      handleAdditionalInfoChange("address", e.target.value)
-                    }
-                    rows={3}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter full address"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 text-sm font-medium mb-2">
-                    Initial Balance
+                    Avatar URL
                   </label>
                   <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={additionalInfo.balance}
-                    onChange={(e) =>
-                      handleAdditionalInfoChange(
-                        "balance",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
+                    type="url"
+                    value={formData.avatarUrl}
+                    onChange={(e) => handleInputChange("avatarUrl", e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
+                    placeholder="https://example.com/avatar.jpg"
                   />
-                  <p className="text-gray-400 text-xs mt-1">
-                    Starting balance for deposits
-                  </p>
                 </div>
               </div>
             </div>
@@ -319,10 +446,9 @@ export default function CreateUserPage() {
                     email: "",
                     password: "",
                     role: "USER",
-                  });
-                  setAdditionalInfo({
-                    phoneNumber: "",
-                    address: "",
+                    dob: "",
+                    phone: "",
+                    avatarUrl: "",
                     balance: 0,
                   });
                   setError("");
@@ -343,46 +469,52 @@ export default function CreateUserPage() {
           </form>
 
           {/* Quick Actions */}
-          <div className="mt-8 bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-100 mb-4">
-              Quick Actions
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button
-                onClick={() => {
-                  setFormData((prev) => ({ ...prev, role: "LIBRARIAN" }));
-                  handleAdditionalInfoChange("balance", 1000);
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors text-sm"
-              >
-                Create Librarian
-                <br />
-                <span className="text-green-200">with $1000 balance</span>
-              </button>
-              <button
-                onClick={() => {
-                  setFormData((prev) => ({ ...prev, role: "USER" }));
-                  handleAdditionalInfoChange("balance", 100);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg transition-colors text-sm"
-              >
-                Create Student
-                <br />
-                <span className="text-blue-200">with $100 balance</span>
-              </button>
-              <button
-                onClick={() => {
-                  setFormData((prev) => ({ ...prev, role: "ADMIN" }));
-                  handleAdditionalInfoChange("balance", 0);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-lg transition-colors text-sm"
-              >
-                Create Admin
-                <br />
-                <span className="text-purple-200">with full access</span>
-              </button>
+          {canCreateAccounts() && (
+            <div className="mt-8 bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-100 mb-4">
+                Quick Actions
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {isAdmin() && (
+                  <button
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, role: "LIBRARIAN", balance: 1000 }));
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors text-sm"
+                  >
+                    Create Librarian
+                    <br />
+                    <span className="text-green-200">with $1000 balance</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, role: "USER", balance: 100 }));
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg transition-colors text-sm"
+                >
+                  Create Student
+                  <br />
+                  <span className="text-blue-200">with $100 balance</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, role: "USER", balance: 0 }));
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-lg transition-colors text-sm"
+                >
+                  Create Basic User
+                  <br />
+                  <span className="text-purple-200">with no initial balance</span>
+                </button>
+              </div>
+              {!isAdmin() && (
+                <p className="text-gray-400 text-sm mt-4">
+                  Note: As a librarian, you can only create user accounts. Contact an admin to create librarian accounts.
+                </p>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </ProtectedRoute>

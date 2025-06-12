@@ -3,6 +3,8 @@ import {
     User,
     CreateUserRequest,
     UpdateUserRequest,
+    SelfUpdateUserRequest,
+    LibrarianUpdateUserRequest,
     ApiResponse,
 } from "./types"
 
@@ -41,13 +43,42 @@ export const userAPI = {
         }
     },
 
-    // Update user
+    // Update user (legacy - for backward compatibility)
     updateUser: async (
         id: string,
         userData: UpdateUserRequest
     ): Promise<ApiResponse<User>> => {
         try {
-            const response = await fetchWrapper.put(`/user/${id}`, userData)
+            const response = await fetchWrapper.patch(`/user/${id}`, userData)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to update user" },
+            }
+        }
+    },
+
+    // Self-update endpoint - users update their own profile
+    updateSelf: async (
+        userData: SelfUpdateUserRequest
+    ): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.patch(`/user/self`, userData)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to update profile" },
+            }
+        }
+    },
+
+    // Role-based update endpoint - admins/librarians update other users
+    updateUserByRole: async (
+        id: string,
+        userData: LibrarianUpdateUserRequest
+    ): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.patch(`/user/${id}`, userData)
             return { data: response }
         } catch (error: any) {
             return {
@@ -57,7 +88,7 @@ export const userAPI = {
     },
 
     // Delete user
-    deleteUser: async (id: number): Promise<ApiResponse<void>> => {
+    deleteUser: async (id: string): Promise<ApiResponse<void>> => {
         try {
             await fetchWrapper.del(`/user/${id}`)
             return { data: undefined }
@@ -66,14 +97,16 @@ export const userAPI = {
                 error: { error: error.message || "Failed to delete user" },
             }
         }
-    },    // Search users by CCCD for librarian workflow
-    searchUserByCCCD: async (cccd: string): Promise<ApiResponse<User[]>> => {
+    },    
+    
+    // Search users by query for general search
+    searchUser: async (query: string): Promise<ApiResponse<User[]>> => {
         try {
-            const response = await fetchWrapper.get(`/user/search?cccd=${encodeURIComponent(cccd)}`)
+            const response = await fetchWrapper.get(`/user/search?q=${encodeURIComponent(query)}`)
             return { data: response }
         } catch (error: any) {
             return {
-                error: { error: error.message || "Failed to search users by CCCD" },
+                error: { error: error.message || "Failed to search users" },
             }
         }
     },

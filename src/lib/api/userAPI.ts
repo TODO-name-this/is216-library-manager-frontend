@@ -3,6 +3,8 @@ import {
     User,
     CreateUserRequest,
     UpdateUserRequest,
+    SelfUpdateUserRequest,
+    LibrarianUpdateUserRequest,
     ApiResponse,
 } from "./types"
 
@@ -41,13 +43,42 @@ export const userAPI = {
         }
     },
 
-    // Update user
+    // Update user (legacy - for backward compatibility)
     updateUser: async (
         id: string,
         userData: UpdateUserRequest
     ): Promise<ApiResponse<User>> => {
         try {
-            const response = await fetchWrapper.put(`/user/${id}`, userData)
+            const response = await fetchWrapper.patch(`/user/${id}`, userData)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to update user" },
+            }
+        }
+    },
+
+    // Self-update endpoint - users update their own profile
+    updateSelf: async (
+        userData: SelfUpdateUserRequest
+    ): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.patch(`/user/self`, userData)
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to update profile" },
+            }
+        }
+    },
+
+    // Role-based update endpoint - admins/librarians update other users
+    updateUserByRole: async (
+        id: string,
+        userData: LibrarianUpdateUserRequest
+    ): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.patch(`/user/${id}`, userData)
             return { data: response }
         } catch (error: any) {
             return {

@@ -9,8 +9,11 @@ export interface User {
     role: "ADMIN" | "LIBRARIAN" | "USER"
     balance: number
     cccd: string
-    phoneNumber: string
-    address: string
+    phoneNumber?: string // Keep as phoneNumber to match existing backend
+    phone?: string // Add phone as alias for the new API
+    address?: string
+    dob?: string // Date of birth as ISO string
+    avatarUrl?: string // Profile picture URL
 }
 
 export interface BookTitle {
@@ -191,10 +194,36 @@ export interface CreateUserRequest {
 }
 
 export interface UpdateUserRequest {
+    cccd?: string
+    dob?: string // LocalDate as ISO string
+    avatarUrl?: string
     name?: string
-    password?: string
+    phone?: string
+    email?: string
+    oldPassword?: string
+    newPassword?: string
     role?: "ADMIN" | "LIBRARIAN" | "USER"
-    balance: number
+    balance?: number
+}
+
+// New interfaces for the updated API endpoints
+export interface SelfUpdateUserRequest {
+    name?: string
+    email?: string
+    phone?: string
+    dob?: string // LocalDate as ISO string
+    avatarUrl?: string
+}
+
+export interface LibrarianUpdateUserRequest {
+    cccd?: string
+    name?: string
+    email?: string
+    phone?: string
+    dob?: string // LocalDate as ISO string
+    avatarUrl?: string
+    balance?: number
+    role?: "ADMIN" | "LIBRARIAN" | "USER" // Note: role restrictions apply based on user's role
 }
 
 export interface CreateBookTitleRequest {

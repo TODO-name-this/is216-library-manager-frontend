@@ -11,7 +11,7 @@ import {
   createTransactionDetail,
 } from "@/app/actions/transactionActions";
 import { getAllReservations } from "@/app/actions/reservationActions";
-import { updateUser, deleteUser } from "@/app/actions/userActions";
+import { updateUser, updateUserByRole, deleteUser } from "@/app/actions/userActions";
 import { bookCopyAPI } from "@/lib/api/bookCopyAPI";
 import {
   Search,
@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   X,
   Trash2,
+  Edit,
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/AuthContext";
@@ -43,6 +44,17 @@ function UserManagementPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [transactionAmount, setTransactionAmount] = useState(0);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editForm, setEditForm] = useState({
+    cccd: "",
+    name: "",
+    email: "",
+    phone: "",
+    dob: "",
+    avatarUrl: "",
+    role: "USER" as "ADMIN" | "LIBRARIAN" | "USER",
+    balance: 0,
+  });
 
   const handleDeposit = async () => {
     if (!selectedUser) return;
@@ -54,8 +66,8 @@ function UserManagementPage() {
 
     const newBalance = selectedUser.balance + transactionAmount;
 
-    const updated = await updateUser(selectedUser.id, {
-      ...selectedUser,
+    // Use the new role-based update endpoint for balance changes
+    const updated = await updateUserByRole(selectedUser.id, {
       balance: newBalance,
     });
 
@@ -82,8 +94,8 @@ function UserManagementPage() {
 
     const newBalance = selectedUser.balance - transactionAmount;
 
-    const updated = await updateUser(selectedUser.id, {
-      ...selectedUser,
+    // Use the new role-based update endpoint for balance changes
+    const updated = await updateUserByRole(selectedUser.id, {
       balance: newBalance,
     });
 
@@ -445,6 +457,43 @@ function UserManagementPage() {
     return false;
   };
 
+  // Permission check functions for edit form fields
+  const canEditCCCD = (): boolean => {
+    return isAdmin() || isLibrarian();
+  };
+
+  const canEditBalance = (): boolean => {
+    return isAdmin() || isLibrarian();
+  };
+
+  const canEditRole = (targetUser: User): boolean => {
+    if (!currentUser || !selectedUser) return false;
+
+    // Admin can edit roles (except cannot promote to admin or edit other admins)
+    if (isAdmin()) {
+      return targetUser.role !== "ADMIN";
+    }
+
+    // Librarian cannot edit roles
+    return false;
+  };
+
+  const canEditUser = (targetUser: User): boolean => {
+    if (!currentUser) return false;
+
+    // Admin can edit anyone except other admins
+    if (isAdmin()) {
+      return targetUser.role !== "ADMIN";
+    }
+
+    // Librarian can only edit users (not other librarians or admins)
+    if (isLibrarian()) {
+      return targetUser.role === "USER";
+    }
+
+    return false;
+  };
+
   // Delete user handler
   const handleDeleteUser = async (userToDelete: User) => {
     if (!canDeleteUser(userToDelete)) {
@@ -487,6 +536,116 @@ function UserManagementPage() {
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("An error occurred while deleting the user. Please try again.");
+    } finally {
+      setProcessingTransaction(false);
+    }
+  };
+
+  // Edit user handler
+  const handleEditUser = (userToEdit: User) => {
+    setEditForm({
+      cccd: userToEdit.cccd || "",
+      name: userToEdit.name,
+      email: userToEdit.email,
+      phone: userToEdit.phoneNumber || userToEdit.phone || "", // Use phoneNumber or phone field
+      dob: userToEdit.dob || "", // Use dob from user if available
+      avatarUrl: userToEdit.avatarUrl || "", // Use avatarUrl from user if available
+      role: userToEdit.role,
+      balance: userToEdit.balance,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleEditUserSubmit = async () => {
+    if (!selectedUser) return;
+
+    // Validation
+    if (!editForm.name.trim()) {
+      alert("Name is required");
+      return;
+    }
+
+    if (!editForm.email.trim()) {
+      alert("Email is required");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editForm.email)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
+    // Phone validation (if provided)
+    if (editForm.phone && editForm.phone.trim() !== "") {
+      const phoneRegex = /^\d{10,15}$/;
+      if (!phoneRegex.test(editForm.phone.replace(/\s/g, ""))) {
+        alert("Phone number must be 10-15 digits");
+        return;
+      }
+    }
+
+    // Balance validation
+    if (editForm.balance < 0) {
+      alert("Balance cannot be negative");
+      return;
+    }
+
+    try {
+      setProcessingTransaction(true);
+      setError(null);
+
+      // Prepare update data based on user role and available fields
+      const updateData: any = {
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim() || undefined,
+        balance: editForm.balance,
+      };
+
+      // Add CCCD if user has permission (admin/librarian)
+      if (isAdmin() || isLibrarian()) {
+        updateData.cccd = editForm.cccd.trim() || undefined;
+      }
+
+      // Add role if user is admin and not trying to promote to admin
+      if (isAdmin() && editForm.role !== "ADMIN") {
+        updateData.role = editForm.role;
+      }
+
+      // Add dob and avatarUrl if provided
+      if (editForm.dob) {
+        updateData.dob = editForm.dob;
+      }
+      if (editForm.avatarUrl) {
+        updateData.avatarUrl = editForm.avatarUrl;
+      }
+
+      // Use the new role-based update endpoint
+      const updatedUser = await updateUserByRole(selectedUser.id, updateData);
+
+      if (updatedUser) {
+        alert(`User "${updatedUser.name}" has been updated successfully.`);
+        
+        // Update selected user and refresh lists
+        setSelectedUser(updatedUser);
+        await loadAllUsers();
+        
+        // Update search results if the updated user is in search results
+        if (searchResults.length > 0) {
+          setSearchResults(prev => 
+            prev.map(user => user.id === updatedUser.id ? updatedUser : user)
+          );
+        }
+
+        setShowEditDialog(false);
+      } else {
+        alert("Failed to update user. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      alert("An error occurred while updating the user. Please try again.");
     } finally {
       setProcessingTransaction(false);
     }
@@ -698,13 +857,15 @@ function UserManagementPage() {
                   User Details: {selectedUser.name}
                 </h2>
                 <div className="flex gap-3">
-                  <button
-                    onClick={openBorrowDialog}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create Borrow Transaction
-                  </button>
+                  {canEditUser(selectedUser) && (
+                    <button
+                      onClick={() => handleEditUser(selectedUser)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit User
+                    </button>
+                  )}
                   {canDeleteUser(selectedUser) && (
                     <button
                       onClick={() => handleDeleteUser(selectedUser)}
@@ -784,7 +945,7 @@ function UserManagementPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-400">CCCD:</span>
-                    <span className="ml-2">{selectedUser.cccd}</span>
+                    <span className="ml-2">{selectedUser.cccd || 'Not provided'}</span>
                   </div>
                   <div>
                     <span className="text-gray-400">Email:</span>
@@ -792,16 +953,47 @@ function UserManagementPage() {
                   </div>
                   <div>
                     <span className="text-gray-400">Phone:</span>
-                    <span className="ml-2">{selectedUser.phoneNumber}</span>
+                    <span className="ml-2">{selectedUser.phoneNumber || selectedUser.phone || 'Not provided'}</span>
                   </div>
                   <div>
                     <span className="text-gray-400">Role:</span>
                     <span className="ml-2">{selectedUser.role}</span>
                   </div>
-                  <div className="md:col-span-2">
-                    <span className="text-gray-400">Address:</span>
-                    <span className="ml-2">{selectedUser.address}</span>
-                  </div>
+                  {selectedUser.dob && (
+                    <div>
+                      <span className="text-gray-400">Date of Birth:</span>
+                      <span className="ml-2">{new Date(selectedUser.dob).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {selectedUser.avatarUrl && (
+                    <div>
+                      <span className="text-gray-400">Avatar:</span>
+                      <span className="ml-2">
+                        <img 
+                          src={selectedUser.avatarUrl} 
+                          alt="User Avatar" 
+                          className="inline-block w-8 h-8 rounded-full ml-2"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <a 
+                          href={selectedUser.avatarUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 underline ml-2"
+                        >
+                          View Image
+                        </a>
+                      </span>
+                    </div>
+                  )}
+                  {selectedUser.address && (
+                    <div className="md:col-span-2">
+                      <span className="text-gray-400">Address:</span>
+                      <span className="ml-2">{selectedUser.address}</span>
+                    </div>
+                  )}
                 </div>
               </div>{" "}
               {/* Reservations List */}
@@ -981,6 +1173,178 @@ function UserManagementPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit User Dialog */}
+        {showEditDialog && selectedUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold flex items-center">
+                    <Edit className="w-5 h-5 mr-2" />
+                    Edit User: {selectedUser.name}
+                  </h2>
+                  <button
+                    onClick={() => setShowEditDialog(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 text-blue-400">Basic Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter full name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter email address"
+                        />
+                      </div>
+
+                      {canEditCCCD() && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            CCCD
+                          </label>
+                          <input
+                            type="text"
+                            value={editForm.cccd}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, cccd: e.target.value }))}
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter CCCD number"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Date of Birth
+                        </label>
+                        <input
+                          type="date"
+                          value={editForm.dob}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, dob: e.target.value }))}
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 text-blue-400">Contact Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter phone number (10-15 digits)"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Avatar URL
+                        </label>
+                        <input
+                          type="url"
+                          value={editForm.avatarUrl}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, avatarUrl: e.target.value }))}
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter avatar image URL"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Account Settings */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 text-blue-400">Account Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {canEditRole(selectedUser) && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Role *
+                          </label>
+                          <select
+                            value={editForm.role}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value as "ADMIN" | "LIBRARIAN" | "USER" }))}
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            {/* Admin cannot promote users to ADMIN role */}
+                            {(isAdmin() || isLibrarian()) && <option value="LIBRARIAN">Librarian</option>}
+                            <option value="USER">User</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {canEditBalance() && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Balance *
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editForm.balance}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter balance"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4 border-t border-gray-700">
+                    <button
+                      onClick={() => setShowEditDialog(false)}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 px-4 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleEditUserSubmit}
+                      disabled={processingTransaction}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg transition-colors"
+                    >
+                      {processingTransaction ? "Updating..." : "Update User"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

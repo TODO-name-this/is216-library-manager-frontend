@@ -63,7 +63,7 @@ export interface BookCopyWithDueInfo {
     borrowDate: string | null
     borrowerId: string | null
     borrowerName: string | null
-    borrowerCccd: string | null 
+    borrowerCccd: string | null
     isOverdue: boolean
 }
 
@@ -123,21 +123,20 @@ export interface Transaction {
     borrowDate: string
     dueDate: string
     returnedDate: string | null
-    status: "BORROWED" | "OVERDUE" | "COMPLETED"
-    totalFee: number
-    penaltyFee: number
-    note: string | null
     // Enhanced fields for display
     userName?: string
     bookTitle?: string
     bookPhotoUrl?: string
     transactionDetail?: TransactionDetail | null
+    // Computed fields (calculated on frontend)
+    status?: "BORROWED" | "OVERDUE" | "COMPLETED"
+    penaltyFee?: number
 }
 
 export interface TransactionDetail {
     transactionId: string
     penaltyFee: number
-    description: string | null
+    description: string
 }
 
 export interface Question {
@@ -182,14 +181,14 @@ export interface ApiError {
 // Request Types for Create/Update operations
 export interface CreateUserRequest {
     cccd: string
-    dob?: string  // Optional LocalDate (past date)
-    avatarUrl?: string  // Optional URL
+    dob?: string // Optional LocalDate (past date)
+    avatarUrl?: string // Optional URL
     name: string
-    phone?: string  // Optional 10-15 digits
+    phone?: string // Optional 10-15 digits
     email: string
     password: string
     role: "ADMIN" | "LIBRARIAN" | "USER"
-    balance: number  // Min 0
+    balance: number // Min 0
 }
 
 export interface UpdateUserRequest {
@@ -368,6 +367,26 @@ export interface UpdateQuestionRequest {
 }
 
 export interface CreateReturnRequest {
-  penaltyFee: number;
-  description?: string;
+    penaltyFee: number
+    description?: string
+}
+
+// New DTOs for borrow and return operations
+export interface CreateTransactionDto {
+    dueDate: string // ISO date string
+    userId: string
+    bookCopyId: string
+}
+
+export interface ReturnBookDto {
+    returnedDate: string // ISO date string
+    bookCondition: "NEW" | "GOOD" | "WORN" | "DAMAGED"
+    description?: string
+    additionalPenaltyFee?: number
+}
+
+export interface ReturnBookResponseDto {
+    transaction: Transaction
+    totalPenaltyFee: number
+    message: string
 }

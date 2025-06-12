@@ -125,6 +125,16 @@ export default function Header() {
                                 Returns
                             </Link>
                             <Link
+                                href="/borrow"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/borrow")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Borrow
+                            </Link>
+                            <Link
                                 href="/statistics"
                                 className={`px-3 py-1 rounded-md transition-colors ${
                                     pathname.startsWith("/statistics")

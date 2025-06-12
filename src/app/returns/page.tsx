@@ -1,12 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import {
-    mockActiveTransactions,
-    mockTransactionDetails,
-    mockDelay,
-} from "@/lib/mockTransaction"
-import { Transaction, TransactionDetail } from "@/lib/api/types"
+import { transactionAPI } from "@/lib/api/transactionAPI"
+import { Transaction, TransactionDetail, ReturnBookDto } from "@/lib/api/types"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import {
     Search,
@@ -37,12 +33,13 @@ export default function ReturnManagement() {
     // UI states
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [successMessage, setSuccessMessage] = useState("")
-
-    // Return processing state
+    const [successMessage, setSuccessMessage] = useState("") // Return processing state
     const [showAssessmentModal, setShowAssessmentModal] = useState(false)
     const [selectedBookCopy, setSelectedBookCopy] = useState<string>("")
-    const [penaltyFee, setPenaltyFee] = useState(0)
+    const [bookCondition, setBookCondition] = useState<
+        "NEW" | "GOOD" | "WORN" | "DAMAGED"
+    >("GOOD")
+    const [additionalPenaltyFee, setAdditionalPenaltyFee] = useState(0)
     const [damageDescription, setDamageDescription] = useState("")
 
     useEffect(() => {
@@ -52,9 +49,19 @@ export default function ReturnManagement() {
     const loadPendingReturns = async () => {
         setIsLoading(true)
         try {
-            await mockDelay(300) // Simulate API delay
-            setPendingReturns(mockActiveTransactions)
-            setError("")
+            const response = await transactionAPI.getAll()
+            if (Array.isArray(response)) {
+                // Filter for borrowed and overdue transactions
+                const activeTransactions = response.filter(
+                    (transaction) =>
+                        transaction.status === "BORROWED" ||
+                        transaction.status === "OVERDUE"
+                )
+                setPendingReturns(activeTransactions)
+                setError("")
+            } else {
+                setError(response.error || "Failed to load transactions")
+            }
         } catch (error) {
             setError("Error loading pending returns")
         } finally {
@@ -72,15 +79,23 @@ export default function ReturnManagement() {
         setError("")
 
         try {
-            await mockDelay(300) // Simulate API delay
-            const filteredTransactions = mockActiveTransactions.filter(
-                (transaction) =>
-                    transaction.bookCopyId?.includes(searchInput) ||
-                    transaction.id.toString().includes(searchInput)
-            )
-            setSearchResults(filteredTransactions)
-            if (filteredTransactions.length === 0) {
-                setError("No active transactions found for this book copy ID")
+            const response = await transactionAPI.getAll()
+            if (Array.isArray(response)) {
+                const filteredTransactions = response.filter(
+                    (transaction) =>
+                        (transaction.status === "BORROWED" ||
+                            transaction.status === "OVERDUE") &&
+                        (transaction.bookCopyId?.includes(searchInput) ||
+                            transaction.id.toString().includes(searchInput))
+                )
+                setSearchResults(filteredTransactions)
+                if (filteredTransactions.length === 0) {
+                    setError(
+                        "No active transactions found for this book copy ID"
+                    )
+                }
+            } else {
+                setError("Failed to search transactions")
             }
         } catch (error) {
             setError("Error searching transactions")
@@ -93,13 +108,14 @@ export default function ReturnManagement() {
         setSelectedTransaction(transaction)
         setIsLoading(true)
         try {
-            await mockDelay(200) // Simulate API delay
-            // Load transaction details from mock data
-            const details = mockTransactionDetails[transaction.id] || [
+            // For now, just set basic transaction details
+            // In a real app, you might fetch additional details from a separate API
+            const details: TransactionDetail[] = [
                 {
                     transactionId: transaction.id,
                     penaltyFee: transaction.penaltyFee || 0,
-                    description: "",
+                    description:
+                        transaction.transactionDetail?.description || "",
                 },
             ]
             setTransactionDetails(details)
@@ -112,7 +128,8 @@ export default function ReturnManagement() {
 
     const openAssessmentModal = (bookCopyId: string) => {
         setSelectedBookCopy(bookCopyId)
-        setPenaltyFee(0)
+        setBookCondition("GOOD")
+        setAdditionalPenaltyFee(0)
         setDamageDescription("")
         setShowAssessmentModal(true)
     }
@@ -124,32 +141,40 @@ export default function ReturnManagement() {
         setError("")
 
         try {
-            await mockDelay(500) // Simulate API delay
-
-            // Simulate successful return approval
-            console.log("Approving return:", {
-                transactionId: selectedTransaction.id,
-                bookCopyId: selectedBookCopy,
-                penaltyFee: penaltyFee > 0 ? penaltyFee : 0,
+            const returnData: ReturnBookDto = {
+                returnedDate: new Date().toISOString().split("T")[0], // Today's date
+                bookCondition,
                 description: damageDescription || undefined,
-            })
+                additionalPenaltyFee:
+                    additionalPenaltyFee > 0 ? additionalPenaltyFee : 0,
+            }
 
-            setSuccessMessage("Return approved successfully!")
-            setShowAssessmentModal(false)
-
-            // Refresh data - remove the returned transaction from pending
-            const updatedPendingReturns = mockActiveTransactions.filter(
-                (t) => t.id !== selectedTransaction.id
+            const response = await transactionAPI.returnBookWithCondition(
+                selectedTransaction.id,
+                returnData
             )
-            setPendingReturns(updatedPendingReturns)
 
-            // Clear selection
-            setSelectedTransaction(null)
-            setTransactionDetails([])
-            setSearchResults([])
-            setSearchInput("")
+            if (response.data) {
+                setSuccessMessage(
+                    `Return processed successfully! ${
+                        response.data.message || ""
+                    }`
+                )
+                setShowAssessmentModal(false)
+
+                // Refresh the pending returns list
+                await loadPendingReturns()
+
+                // Clear selection
+                setSelectedTransaction(null)
+                setTransactionDetails([])
+                setSearchResults([])
+                setSearchInput("")
+            } else {
+                setError(response.error?.error || "Failed to process return")
+            }
         } catch (error) {
-            setError("Error approving return")
+            setError("Error processing return")
         } finally {
             setIsLoading(false)
         }
@@ -192,19 +217,16 @@ export default function ReturnManagement() {
                 <h1 className="text-3xl font-bold text-gray-100 mb-8">
                     Return Management
                 </h1>
-
                 {error && (
                     <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded mb-4">
                         {error}
                     </div>
                 )}
-
                 {successMessage && (
                     <div className="bg-green-500/20 border border-green-500 text-green-300 px-4 py-3 rounded mb-4">
                         {successMessage}
                     </div>
                 )}
-
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Panel - Search & Selected Transaction */}
                     <div className="space-y-6">
@@ -499,8 +521,7 @@ export default function ReturnManagement() {
                             )}
                         </div>
                     </div>
-                </div>
-
+                </div>{" "}
                 {/* Assessment Modal */}
                 {showAssessmentModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -527,26 +548,34 @@ export default function ReturnManagement() {
                                         Book Condition
                                     </label>
                                     <select
+                                        value={bookCondition}
                                         onChange={(e) => {
-                                            const value = e.target.value
-                                            if (value === "damaged") {
-                                                setPenaltyFee(50000) // 50,000 VND for damage
-                                            } else if (value === "lost") {
-                                                setPenaltyFee(200000) // 200,000 VND for lost book
+                                            const value = e.target.value as
+                                                | "NEW"
+                                                | "GOOD"
+                                                | "WORN"
+                                                | "DAMAGED"
+                                            setBookCondition(value)
+                                            // Auto-set penalty for damaged condition
+                                            if (value === "DAMAGED") {
+                                                setAdditionalPenaltyFee(50000) // 50,000 VND for damage
                                             } else {
-                                                setPenaltyFee(0)
+                                                setAdditionalPenaltyFee(0)
                                             }
                                         }}
                                         className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600"
                                     >
-                                        <option value="good">
+                                        <option value="NEW">
+                                            New Condition
+                                        </option>
+                                        <option value="GOOD">
                                             Good Condition
                                         </option>
-                                        <option value="damaged">
-                                            Damaged (50,000 VND penalty)
+                                        <option value="WORN">
+                                            Worn Condition
                                         </option>
-                                        <option value="lost">
-                                            Lost (200,000 VND penalty)
+                                        <option value="DAMAGED">
+                                            Damaged (50,000 VND penalty)
                                         </option>
                                     </select>
                                 </div>
@@ -557,9 +586,9 @@ export default function ReturnManagement() {
                                     </label>
                                     <input
                                         type="number"
-                                        value={penaltyFee}
+                                        value={additionalPenaltyFee}
                                         onChange={(e) =>
-                                            setPenaltyFee(
+                                            setAdditionalPenaltyFee(
                                                 Number(e.target.value)
                                             )
                                         }
@@ -585,7 +614,7 @@ export default function ReturnManagement() {
                                 <div className="bg-gray-700 rounded-lg p-3">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-400">
-                                            Late Fee:
+                                            Existing Late Fee:
                                         </span>
                                         <span className="text-gray-100">
                                             {formatCurrency(
@@ -596,10 +625,12 @@ export default function ReturnManagement() {
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-400">
-                                            Damage Fee:
+                                            Additional Penalty:
                                         </span>
                                         <span className="text-gray-100">
-                                            {formatCurrency(penaltyFee)}
+                                            {formatCurrency(
+                                                additionalPenaltyFee
+                                            )}
                                         </span>
                                     </div>
                                     <hr className="border-gray-600 my-2" />
@@ -610,7 +641,7 @@ export default function ReturnManagement() {
                                         <span className="text-gray-100">
                                             {formatCurrency(
                                                 (selectedTransaction?.penaltyFee ||
-                                                    0) + penaltyFee
+                                                    0) + additionalPenaltyFee
                                             )}
                                         </span>
                                     </div>

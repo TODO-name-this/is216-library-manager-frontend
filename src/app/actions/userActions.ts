@@ -68,7 +68,7 @@ export async function updateUser(
     }
 }
 
-export async function deleteUser(id: number): Promise<boolean> {
+export async function deleteUser(id: string): Promise<boolean> {
     try {
         const response = await userAPI.deleteUser(id)
         if (response.error) {

@@ -57,7 +57,7 @@ export const userAPI = {
     },
 
     // Delete user
-    deleteUser: async (id: number): Promise<ApiResponse<void>> => {
+    deleteUser: async (id: string): Promise<ApiResponse<void>> => {
         try {
             await fetchWrapper.del(`/user/${id}`)
             return { data: undefined }
@@ -66,7 +66,9 @@ export const userAPI = {
                 error: { error: error.message || "Failed to delete user" },
             }
         }
-    },    // Search users by CCCD for librarian workflow
+    },    
+    
+    // Search users by CCCD for librarian workflow
     searchUserByCCCD: async (cccd: string): Promise<ApiResponse<User[]>> => {
         try {
             const response = await fetchWrapper.get(`/user/search?cccd=${encodeURIComponent(cccd)}`)

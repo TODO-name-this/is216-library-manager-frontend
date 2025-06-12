@@ -11,7 +11,7 @@ import {
   createTransactionDetail,
 } from "@/app/actions/transactionActions";
 import { getAllReservations } from "@/app/actions/reservationActions";
-import { updateUser } from "@/app/actions/userActions";
+import { updateUser, deleteUser } from "@/app/actions/userActions";
 import { bookCopyAPI } from "@/lib/api/bookCopyAPI";
 import {
   Search,
@@ -24,10 +24,13 @@ import {
   RotateCcw,
   AlertTriangle,
   X,
+  Trash2,
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/lib/AuthContext";
 
 function UserManagementPage() {
+  const { user: currentUser, isAdmin, isLibrarian } = useAuth();
   const [searchCCCD, setSearchCCCD] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [searchResults, setSearchResults] = useState<User[]>([]);
@@ -387,6 +390,70 @@ function UserManagementPage() {
     });
   };
 
+  // Permission check function for delete user
+  const canDeleteUser = (userToDelete: User): boolean => {
+    if (!currentUser) return false;
+
+    // Admin can delete anyone except other admins
+    if (isAdmin()) {
+      return userToDelete.role !== "ADMIN";
+    }
+
+    // Librarian can only delete users (not other librarians or admins)
+    if (isLibrarian()) {
+      return userToDelete.role === "USER";
+    }
+
+    return false;
+  };
+
+  // Delete user handler
+  const handleDeleteUser = async (userToDelete: User) => {
+    if (!canDeleteUser(userToDelete)) {
+      alert("You don't have permission to delete this user.");
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to delete user "${userToDelete.name}"?\n\nThis action cannot be undone and will:\n- Remove the user account permanently\n- Cancel any active reservations\n- Close any pending transactions\n\nType "DELETE" to confirm:`;
+
+    const userInput = prompt(confirmMessage);
+    if (userInput !== "DELETE") {
+      return;
+    }
+
+    try {
+      setProcessingTransaction(true);
+      setError(null);
+
+      const success = await deleteUser(userToDelete.id);
+
+      if (success) {
+        alert(`User "${userToDelete.name}" has been deleted successfully.`);
+
+        // Clear selected user if it was the deleted user
+        if (selectedUser?.id === userToDelete.id) {
+          setSelectedUser(null);
+          setUserReservations([]);
+          setUserTransactions([]);
+        }
+
+        // Refresh user lists
+        await loadAllUsers();
+        setSearchResults([]);
+        setSearchCCCD("");
+      } else {
+        alert(
+          "Failed to delete user. The user may have active transactions or reservations that need to be resolved first."
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("An error occurred while deleting the user. Please try again.");
+    } finally {
+      setProcessingTransaction(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -534,13 +601,25 @@ function UserManagementPage() {
                   <Users className="w-5 h-5 mr-2" />
                   User Details: {selectedUser.name}
                 </h2>
-                <button
-                  onClick={openBorrowDialog}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Borrow Transaction
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={openBorrowDialog}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Borrow Transaction
+                  </button>
+                  {canDeleteUser(selectedUser) && (
+                    <button
+                      onClick={() => handleDeleteUser(selectedUser)}
+                      disabled={processingTransaction}
+                      className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete User
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="p-6">

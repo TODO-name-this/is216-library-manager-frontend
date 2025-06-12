@@ -68,14 +68,14 @@ export const userAPI = {
         }
     },    
     
-    // Search users by CCCD for librarian workflow
-    searchUserByCCCD: async (cccd: string): Promise<ApiResponse<User[]>> => {
+    // Search users by query for general search
+    searchUser: async (query: string): Promise<ApiResponse<User[]>> => {
         try {
-            const response = await fetchWrapper.get(`/user/search?cccd=${encodeURIComponent(cccd)}`)
+            const response = await fetchWrapper.get(`/user/search?q=${encodeURIComponent(query)}`)
             return { data: response }
         } catch (error: any) {
             return {
-                error: { error: error.message || "Failed to search users by CCCD" },
+                error: { error: error.message || "Failed to search users" },
             }
         }
     },

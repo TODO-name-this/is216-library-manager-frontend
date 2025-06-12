@@ -31,7 +31,7 @@ import { useAuth } from "@/lib/AuthContext";
 
 function UserManagementPage() {
   const { user: currentUser, isAdmin, isLibrarian } = useAuth();
-  const [searchCCCD, setSearchCCCD] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -39,8 +39,10 @@ function UserManagementPage() {
   const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchCompleted, setSearchCompleted] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [transactionAmount, setTransactionAmount] = useState(0);
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
 
   const handleDeposit = async () => {
     if (!selectedUser) return;
@@ -128,6 +130,43 @@ function UserManagementPage() {
     loadAllUsers();
   }, []);
 
+  // Auto-search with debounce
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchLoading(false); // Clear loading when search is empty
+      setSearchCompleted(false); // Reset search completed state
+      return;
+    }
+
+    setSearchLoading(true); // Start loading immediately when user types
+    setSearchCompleted(false); // Reset search completed state
+
+    const timeoutId = setTimeout(() => {
+      performSearch(searchQuery.trim());
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const performSearch = async (query: string) => {
+    setSearchLoading(true);
+    try {
+      const result = await userAPI.searchUser(query);
+      if ("data" in result && result.data) {
+        setSearchResults(result.data);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+      setSearchCompleted(true); // Mark search as completed
+    }
+  };
+
   const loadAllUsers = async () => {
     setInitialLoading(true);
     try {
@@ -144,26 +183,6 @@ function UserManagementPage() {
       setAllUsers([]);
     } finally {
       setInitialLoading(false);
-    }
-  };
-
-  const handleSearch = async () => {
-    if (!searchCCCD.trim()) return;
-
-    setSearchLoading(true);
-    try {
-      const result = await userAPI.searchUserByCCCD(searchCCCD.trim());
-      if ("data" in result && result.data) {
-        setSearchResults(result.data);
-      } else {
-        setSearchResults([]);
-        alert("No users found with that CCCD");
-      }
-    } catch (error) {
-      console.error("Error searching users:", error);
-      alert("Failed to search users");
-    } finally {
-      setSearchLoading(false);
     }
   };
 
@@ -185,6 +204,17 @@ function UserManagementPage() {
         (t) => t.userId === user.id
       );
       setUserTransactions(userTransactionsFiltered);
+
+      // Scroll to user details section after a short delay to ensure content is loaded
+      setTimeout(() => {
+        const userDetailsElement = document.getElementById('user-details-section');
+        if (userDetailsElement) {
+          userDetailsElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }, 100);
     } catch (error) {
       console.error("Error loading user data:", error);
       setUserReservations([]);
@@ -199,6 +229,14 @@ function UserManagementPage() {
       style: "currency",
       currency: "VND",
     }).format(amount);
+  };
+
+  // Filter users by role
+  const getFilteredUsers = () => {
+    if (roleFilter === "ALL") {
+      return allUsers;
+    }
+    return allUsers.filter(user => user.role === roleFilter);
   };
 
   const getStatusColor = (status: string) => {
@@ -440,7 +478,7 @@ function UserManagementPage() {
         // Refresh user lists
         await loadAllUsers();
         setSearchResults([]);
-        setSearchCCCD("");
+        setSearchQuery("");
       } else {
         alert(
           "Failed to delete user. The user may have active transactions or reservations that need to be resolved first."
@@ -479,60 +517,99 @@ function UserManagementPage() {
         <div className="bg-gray-800 rounded-lg p-6 mb-8 border border-gray-700">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <Search className="w-5 h-5 mr-2" />
-            Search User by CCCD
+            Search Users
           </h2>
 
           <div className="flex gap-4">
-            <input
-              type="text"
-              value={searchCCCD}
-              onChange={(e) => setSearchCCCD(e.target.value)}
-              placeholder="Enter CCCD (Social Security Number)"
-              className="flex-1 p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, email, CCCD, or phone..."
+                className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  title="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
             <button
-              onClick={handleSearch}
-              disabled={searchLoading || !searchCCCD.trim()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg font-medium transition-colors"
+              onClick={() => performSearch(searchQuery.trim())}
+              disabled={searchLoading || !searchQuery.trim()}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg font-medium transition-colors flex items-center gap-2"
             >
-              {searchLoading ? "Searching..." : "Search"}
+              {searchLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  Search
+                </>
+              )}
             </button>
           </div>
 
           {/* Search Results */}
-          {searchResults.length > 0 && (
+          {searchQuery.trim() && searchCompleted && (
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-3">Search Results</h3>
-              <div className="space-y-2">
-                {searchResults.map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => handleSelectUser(user)}
-                    className="p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors"
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">{user.name}</h4>
-                        <p className="text-gray-400 text-sm">
-                          CCCD: {user.cccd}
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          Email: {user.email}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-green-400 font-medium">
-                          {formatCurrency(user.balance)}
-                        </p>
-                        <span className="inline-block px-2 py-1 text-xs rounded bg-blue-600 text-white">
-                          {user.role}
-                        </span>
+              {searchResults.length > 0 ? (
+                <div className="space-y-2">
+                  {searchResults.map((user) => (
+                    <div
+                      key={user.id}
+                      onClick={() => handleSelectUser(user)}
+                      className="p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{user.name}</h4>
+                          <p className="text-gray-400 text-sm">
+                            CCCD: {user.cccd}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            Email: {user.email}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-green-400 font-medium">
+                            {formatCurrency(user.balance)}
+                          </p>
+                          <span
+                            className={`inline-block px-2 py-1 text-xs rounded font-medium ${
+                              user.role === "ADMIN"
+                                ? "bg-red-600/20 text-red-400"
+                                : user.role === "LIBRARIAN"
+                                ? "bg-blue-600/20 text-blue-400"
+                                : "bg-green-600/20 text-green-400"
+                            }`}
+                          >
+                            {user.role}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-700 rounded-lg text-center">
+                  <p className="text-gray-400">
+                    No users found matching "{searchQuery}"
+                  </p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Try searching with a different name, email, CCCD, or phone number
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -540,10 +617,27 @@ function UserManagementPage() {
         {/* All Users Section */}
         <div className="bg-gray-800 rounded-lg border border-gray-700 mb-8">
           <div className="p-6 border-b border-gray-700">
-            <h2 className="text-xl font-semibold flex items-center">
-              <Users className="w-5 h-5 mr-2" />
-              All Users ({allUsers.length})
-            </h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                All Users ({getFilteredUsers().length} of {allUsers.length})
+              </h2>
+              
+              {/* Role Filter */}
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-gray-300">Filter by role:</label>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="ALL">All Roles</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="LIBRARIAN">Librarian</option>
+                  <option value="USER">User</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="p-6">
@@ -551,11 +645,13 @@ function UserManagementPage() {
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
-            ) : allUsers.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No users found</p>
+            ) : getFilteredUsers().length === 0 ? (
+              <p className="text-gray-400 text-center py-8">
+                {roleFilter === "ALL" ? "No users found" : `No ${roleFilter.toLowerCase()} users found`}
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-                {allUsers.map((user) => (
+                {getFilteredUsers().map((user) => (
                   <div
                     key={user.id}
                     className={`p-4 rounded-lg border transition-colors cursor-pointer ${
@@ -593,7 +689,7 @@ function UserManagementPage() {
 
         {/* Selected User Details */}
         {selectedUser && (
-          <div className="bg-gray-800 rounded-lg border border-gray-700">
+          <div id="user-details-section" className="bg-gray-800 rounded-lg border border-gray-700">
             {" "}
             <div className="p-6 border-b border-gray-700">
               <div className="flex justify-between items-center">

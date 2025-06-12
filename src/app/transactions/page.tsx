@@ -38,6 +38,16 @@ function TransactionsPageContent() {
                     // Staff can see all transactions
                     transactionData = await getAllTransactions()
                     users = await getAllUsers()
+                    // Debug: Log transactions with returnedDate that shouldn't be displayed
+                    const returnedTransactions = transactionData.filter(
+                        (trans) => trans.returnedDate !== null
+                    )
+                    if (returnedTransactions.length > 0) {
+                        console.log(
+                            "Found transactions with returnedDate:",
+                            returnedTransactions
+                        )
+                    }
                 } else {
                     // Regular users see only their transactions
                     transactionData = await getMyTransactions()
@@ -45,21 +55,30 @@ function TransactionsPageContent() {
 
                 // Create transactions with user data
                 const transactionsWithUsers: TransactionWithUser[] =
-                    transactionData.map((transaction) => {
-                        const transactionWithUser: TransactionWithUser = {
-                            transaction,
-                        }
-
-                        if (isStaff) {
-                            // For staff, include user information
-                            const userForTransaction = users.find(
-                                (u) => u.id === transaction.userId
+                    transactionData
+                        .filter((transaction) => {
+                            // Only include transactions that don't have a returnedDate
+                            // or where returnedDate is null or empty string
+                            return (
+                                !transaction.returnedDate ||
+                                transaction.returnedDate === ""
                             )
-                            transactionWithUser.user = userForTransaction
-                        }
+                        })
+                        .map((transaction) => {
+                            const transactionWithUser: TransactionWithUser = {
+                                transaction,
+                            }
 
-                        return transactionWithUser
-                    })
+                            if (isStaff) {
+                                // For staff, include user information
+                                const userForTransaction = users.find(
+                                    (u) => u.id === transaction.userId
+                                )
+                                transactionWithUser.user = userForTransaction
+                            }
+
+                            return transactionWithUser
+                        })
 
                 setTransactions(transactionsWithUsers)
             } catch (err) {

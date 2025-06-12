@@ -11,7 +11,6 @@ export interface User {
     cccd: string
     phoneNumber?: string // Keep as phoneNumber to match existing backend
     phone?: string // Add phone as alias for the new API
-    address?: string
     dob?: string // Date of birth as ISO string
     avatarUrl?: string // Profile picture URL
 }

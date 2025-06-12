@@ -996,12 +996,6 @@ function UserManagementPage() {
                       ) : 'N/A'}
                     </span>
                   </div>
-                  <div className="md:col-span-2">
-                    <span className="text-gray-400">Address:</span>
-                    <span className={`ml-2 ${selectedUser.address ? 'text-white' : 'text-gray-500'}`}>
-                      {selectedUser.address || 'N/A'}
-                    </span>
-                  </div>
                 </div>
               </div>{" "}
               {/* Reservations List */}

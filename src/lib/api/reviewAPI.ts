@@ -92,4 +92,31 @@ export const reviewAPI = {
             }
         }
     },
+
+    // Get current user's review for a specific book
+    getMyReviewForBook: async (bookTitleId: string): Promise<Review | ApiError | null> => {
+        try {
+            const response = await fetchWrapper.get(
+                `/review/my-review/${bookTitleId}`
+            )
+            
+            // Handle empty response (no review found)
+            if (!response || response === "" || response === null) {
+                return null
+            }
+            
+            if (response.error) {
+                return {
+                    error:
+                        response.error.message ||
+                        "Failed to fetch your review for this book",
+                }
+            }
+            return response
+        } catch (error) {
+            return {
+                error: "Network error while fetching your review for this book",
+            }
+        }
+    },
 }

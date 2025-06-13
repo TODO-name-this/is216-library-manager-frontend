@@ -99,6 +99,7 @@ export interface Review {
     star: number
     bookTitleId: string
     userId: string
+    userName?: string // Obfuscated user name (showing only last word of full name)
 }
 
 export interface Reservation {
@@ -304,7 +305,7 @@ export interface CreateReviewRequest {
 }
 
 export interface UpdateReviewRequest {
-    rating?: number
+    star?: number
     comment?: string
 }
 

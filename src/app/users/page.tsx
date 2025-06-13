@@ -293,39 +293,6 @@ function UserManagementPage() {
     }
   };
 
-  const handleCreateTransaction = async () => {
-    if (!selectedUser || !borrowForm.bookCopyId) {
-      setError("Please select a book copy");
-      return;
-    }
-
-    setProcessingTransaction(true);
-    setError(null);
-    try {
-      const result = await createTransaction({
-        userId: selectedUser.id,
-        bookCopyId: borrowForm.bookCopyId,
-        bookCopyIds: [],
-        note: "",
-      });
-
-      if (result) {
-        alert("Transaction created successfully!");
-        setShowBorrowDialog(false);
-        setBorrowForm({ bookCopyId: "", dueDate: "" });
-        // Refresh user data
-        await handleSelectUser(selectedUser);
-      } else {
-        setError("Failed to create transaction");
-      }
-    } catch (error) {
-      console.error("Error creating transaction:", error);
-      setError("Failed to create transaction");
-    } finally {
-      setProcessingTransaction(false);
-    }
-  };
-
   const handleFulfillReservation = async () => {
     if (!showFulfillDialog.reservationId || !fulfillForm.bookCopyId) {
       setError("Please select a book copy");

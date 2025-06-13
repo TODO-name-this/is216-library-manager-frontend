@@ -1,19 +1,20 @@
 "use client"
 
-import React, { useState, useEffect, ChangeEvent, use } from "react"
+import React, { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { getAllUsers } from "@/app/actions/userActions"
-import { getReservationsByUserId } from "@/app/actions/reservationActions"
-import { createTransaction } from "@/app/actions/transactionActions"
-import { User, Reservation } from "@/lib/api/types"
-import Link from "next/link"
-
-interface TransactionDetail {
-    bookCopyId: string
-    title: string
-    author: string
-    dueDate: string
-}
+import { transactionAPI } from "@/lib/api/transactionAPI"
+import { userAPI } from "@/lib/api/userAPI"
+import { Transaction, User } from "@/lib/api/types"
+import { 
+    ArrowLeft, 
+    Calendar, 
+    Clock, 
+    User as UserIcon, 
+    BookOpen,
+    AlertCircle,
+    CheckCircle,
+    RefreshCw
+} from "lucide-react"
 
 export default function TransactionDetailsPage({
     params,
@@ -24,10 +25,8 @@ export default function TransactionDetailsPage({
     const router = useRouter()
 
     const [user, setUser] = useState<User | null>(null)
-    const [reservations, setReservations] = useState<Reservation[]>([])
-    const [details, setDetails] = useState<TransactionDetail[]>([])
+    const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
-    const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
@@ -36,39 +35,23 @@ export default function TransactionDetailsPage({
                 setLoading(true)
                 setError(null)
 
-                // Get all users to find user by userId (assuming userId is ID or similar identifier)
-                const users = await getAllUsers()
-                const foundUser = users.find(
-                    (u) => u.id.toString() === userId || u.cccd === userId
-                )
-
-                if (!foundUser) {
-                    throw new Error("User not found")
+                // Load user information
+                const userResponse = await userAPI.getUserById(userId)
+                if (userResponse.error) {
+                    throw new Error(userResponse.error.error || "User not found")
                 }
+                setUser(userResponse.data!)
 
-                setUser(foundUser) // Get user reservations
-                const userReservations = await getReservationsByUserId(
-                    Number(foundUser.id)
-                )
-                setReservations(userReservations)
-
-                // Build transaction details from reservations
-                const transactionDetails: TransactionDetail[] = []
-                for (const reservation of userReservations) {
-                    // All active reservations can be converted to transactions
-                    // Book details are already included in the reservation response
-                    transactionDetails.push({
-                        bookCopyId:
-                            reservation.bookCopyId || reservation.bookTitleId, // Use bookCopyId if available, otherwise bookTitleId
-                        title: reservation.bookTitle,
-                        author: reservation.bookAuthors.join(", ") || "Unknown",
-                        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-                            .toISOString()
-                            .slice(0, 10), // 14 days from now
-                    })
+                // Load all transactions and filter by userId
+                const transactionsResponse = await transactionAPI.getAll()
+                if (Array.isArray(transactionsResponse)) {
+                    const userTransactions = transactionsResponse.filter(
+                        (transaction) => transaction.userId === userId
+                    )
+                    setTransactions(userTransactions)
+                } else {
+                    throw new Error(transactionsResponse.error || "Failed to load transactions")
                 }
-
-                setDetails(transactionDetails)
             } catch (err) {
                 console.error("Error loading transaction data:", err)
                 setError(
@@ -86,62 +69,46 @@ export default function TransactionDetailsPage({
         }
     }, [userId])
 
-    const handleChange = (
-        index: number,
-        field: keyof TransactionDetail,
-        value: string
-    ) => {
-        setDetails((prev) =>
-            prev.map((d, i) => (i === index ? { ...d, [field]: value } : d))
-        )
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
     }
 
-    const handleRemove = (index: number) => {
-        setDetails((prev) => prev.filter((_, i) => i !== index))
-    }
-
-    const handleSave = async () => {
-        if (!confirm("Are you sure you want to create these transactions?"))
-            return
-
-        try {
-            setSubmitting(true)
-            setError(null)
-
-            // Create separate transactions for each book (new backend structure)
-            for (const detail of details) {
-                const transactionData = {
-                    userId: user?.id || userId,
-                    bookCopyId: detail.bookCopyId,
-                }
-
-                await createTransaction(transactionData)
-            }
-
-            alert(`${details.length} transaction(s) created successfully.`)
-            router.push("/transactions")
-        } catch (err) {
-            console.error("Error creating transactions:", err)
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Failed to create transactions"
-            )
-        } finally {
-            setSubmitting(false)
+    const getStatusBadge = (transaction: Transaction) => {
+        const status = transaction.status || "UNKNOWN"
+        const statusColors = {
+            BORROWED: "bg-blue-100 text-blue-800",
+            OVERDUE: "bg-red-100 text-red-800", 
+            COMPLETED: "bg-green-100 text-green-800",
+            UNKNOWN: "bg-gray-100 text-gray-800"
         }
-    }
+        
+        const statusIcons = {
+            BORROWED: <Clock className="w-4 h-4" />,
+            OVERDUE: <AlertCircle className="w-4 h-4" />,
+            COMPLETED: <CheckCircle className="w-4 h-4" />,
+            UNKNOWN: <RefreshCw className="w-4 h-4" />
+        }
 
-    const handleBack = () => {
-        router.back()
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${statusColors[status as keyof typeof statusColors]}`}>
+                {statusIcons[status as keyof typeof statusIcons]}
+                {status}
+            </span>
+        )
     }
 
     if (loading) {
         return (
-            <main className="p-6 bg-gray-900 text-white min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-                    <p className="mt-2">Loading transaction details...</p>
+            <main className="min-h-screen bg-gray-900 text-white p-6">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+                        <p>Loading transaction details...</p>
+                    </div>
                 </div>
             </main>
         )
@@ -149,15 +116,19 @@ export default function TransactionDetailsPage({
 
     if (error) {
         return (
-            <main className="p-6 bg-gray-900 text-white min-h-screen">
-                <div className="bg-red-600 text-white p-4 rounded mb-4">
-                    <h2 className="font-bold">Error</h2>
+            <main className="min-h-screen bg-gray-900 text-white p-6">
+                <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded mb-4">
+                    <h2 className="font-bold flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
+                        Error
+                    </h2>
                     <p>{error}</p>
                 </div>
                 <button
                     onClick={() => router.back()}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-white"
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-white flex items-center gap-2"
                 >
+                    <ArrowLeft className="w-4 h-4" />
                     Go Back
                 </button>
             </main>
@@ -165,106 +136,172 @@ export default function TransactionDetailsPage({
     }
 
     return (
-        <main className="p-6 bg-gray-900 text-white min-h-screen">
-            <h1 className="text-2xl font-bold mb-4">
-                Chi tiết đặt sách của: {user?.name || userId}
-            </h1>
+        <main className="min-h-screen bg-gray-900 text-white p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-bold flex items-center gap-3">
+                    <UserIcon className="w-8 h-8" />
+                    Transaction Details - {user?.name || userId}
+                </h1>
+                <button
+                    onClick={() => router.back()}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                </button>
+            </div>
 
-            {submitting && (
-                <div className="bg-blue-600 text-white p-4 rounded mb-4">
-                    <p>Creating transactions...</p>
+            {/* User Information */}
+            {user && (
+                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-8">
+                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <UserIcon className="w-5 h-5" />
+                        User Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label className="text-sm text-gray-400">Name</label>
+                            <p className="font-medium">{user.name}</p>
+                        </div>
+                        <div>
+                            <label className="text-sm text-gray-400">CCCD</label>
+                            <p className="font-medium">{user.cccd}</p>
+                        </div>
+                        <div>
+                            <label className="text-sm text-gray-400">Email</label>
+                            <p className="font-medium">{user.email}</p>
+                        </div>
+                        <div>
+                            <label className="text-sm text-gray-400">Balance</label>
+                            <p className="font-medium text-green-400">
+                                {new Intl.NumberFormat("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                }).format(user.balance)}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            <div className="overflow-x-auto bg-gray-900 rounded mb-6">
-                <table className="w-full text-left text-white bg-gray-800 rounded-xl overflow-hidden shadow-lg mb-4">
-                    <thead className="bg-gray-700">
-                        <tr>
-                            <th className="px-4 py-3">Copy ID</th>
-                            <th className="px-4 py-3">Title</th>
-                            <th className="px-4 py-3">Author</th>
-                            <th className="px-4 py-3">Due Date</th>
-                            <th className="px-4 py-3">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {details.map((d, index) => (
-                            <tr
-                                key={d.bookCopyId}
-                                className="border-t border-gray-700"
-                            >
-                                <td className="px-4 py-3 text-gray-500">
-                                    {d.bookCopyId}
-                                </td>
-                                <td className="px-4 py-3 text-gray-500">
-                                    {d.title}
-                                </td>
-                                <td className="px-4 py-3 text-gray-500">
-                                    {d.author}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <input
-                                        type="date"
-                                        value={d.dueDate}
-                                        className="p-1 rounded border border-gray-700 bg-gray-800 text-gray-300"
-                                        onChange={(
-                                            e: ChangeEvent<HTMLInputElement>
-                                        ) =>
-                                            handleChange(
-                                                index,
-                                                "dueDate",
-                                                e.target.value
-                                            )
-                                        }
-                                        disabled={submitting}
-                                    />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <button
-                                        onClick={() => handleRemove(index)}
-                                        className="px-2 py-1 bg-red-600 rounded hover:bg-red-500"
-                                        disabled={submitting}
-                                    >
-                                        Hủy cuốn
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        {details.length === 0 && (
-                            <tr>
-                                <td
-                                    colSpan={5}
-                                    className="px-4 py-3 text-center text-gray-400"
-                                >
-                                    Không có sách để mượn.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            {/* Transactions List */}
+            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+                <div className="p-6 border-b border-gray-700">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <BookOpen className="w-5 h-5" />
+                        Transaction History ({transactions.length})
+                    </h2>
+                </div>
 
-            <div className="flex space-x-4">
-                <button
-                    onClick={handleBack}
-                    className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
-                    disabled={submitting}
-                >
-                    Quay lại
-                </button>
-                <Link
-                    href="/transactions"
-                    className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
-                >
-                    Hủy
-                </Link>
-                <button
-                    onClick={handleSave}
-                    className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-400 disabled:bg-gray-600"
-                    disabled={submitting || details.length === 0}
-                >
-                    {submitting ? "Đang lưu..." : "Lưu"}
-                </button>
+                {transactions.length === 0 ? (
+                    <div className="p-8 text-center text-gray-400">
+                        <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg mb-2">No transactions found</p>
+                        <p className="text-sm">This user has no borrowing history.</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-700">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Transaction ID
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Book
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Book Copy ID
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Borrow Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Due Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Return Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Penalty Fee
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700">
+                                {transactions.map((transaction) => (
+                                    <tr
+                                        key={transaction.id}
+                                        className="hover:bg-gray-700/50"
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="font-mono text-sm text-blue-400">
+                                                {transaction.id}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="max-w-xs">
+                                                <p className="font-medium truncate">
+                                                    {transaction.bookTitle || "Unknown Book"}
+                                                </p>
+                                                {transaction.bookPhotoUrl && (
+                                                    <p className="text-sm text-gray-400">
+                                                        Has cover image
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="font-mono text-sm">
+                                                {transaction.bookCopyId}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {getStatusBadge(transaction)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-1 text-sm">
+                                                <Calendar className="w-4 h-4 text-gray-400" />
+                                                {formatDate(transaction.borrowDate)}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-1 text-sm">
+                                                <Calendar className="w-4 h-4 text-gray-400" />
+                                                {formatDate(transaction.dueDate)}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {transaction.returnedDate ? (
+                                                <div className="flex items-center gap-1 text-sm text-green-400">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    {formatDate(transaction.returnedDate)}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">Not returned</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {transaction.penaltyFee && transaction.penaltyFee > 0 ? (
+                                                <span className="text-red-400 font-medium">
+                                                    {new Intl.NumberFormat("vi-VN", {
+                                                        style: "currency",
+                                                        currency: "VND",
+                                                    }).format(transaction.penaltyFee)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">None</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </main>
     )

@@ -97,16 +97,33 @@ export const userAPI = {
                 error: { error: error.message || "Failed to delete user" },
             }
         }
-    },    
-    
+    },
     // Search users by query for general search
     searchUser: async (query: string): Promise<ApiResponse<User[]>> => {
         try {
-            const response = await fetchWrapper.get(`/user/search?q=${encodeURIComponent(query)}`)
+            const response = await fetchWrapper.get(
+                `/user/search?q=${encodeURIComponent(query)}`
+            )
             return { data: response }
         } catch (error: any) {
             return {
                 error: { error: error.message || "Failed to search users" },
+            }
+        }
+    },
+
+    // Get current user information (including up-to-date balance)
+    getCurrentUser: async (): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.get("/user/self")
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: {
+                    error:
+                        error.message ||
+                        "Failed to fetch current user information",
+                },
             }
         }
     },

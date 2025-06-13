@@ -65,18 +65,21 @@ export default function Header() {
                                         : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
                                 }`}
                             >
-                                Transactions
+                                Transactions{" "}
                             </Link>
-                            <Link
-                                href="/account"
-                                className={`px-3 py-1 rounded-md transition-colors ${
-                                    pathname.startsWith("/account")
-                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
-                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
-                                }`}
-                            >
-                                Account
-                            </Link>
+                            {/* Show Account tab only for regular users, not for LIBRARIAN/ADMIN */}
+                            {!(isLibrarian() || isAdmin()) && (
+                                <Link
+                                    href="/account"
+                                    className={`px-3 py-1 rounded-md transition-colors ${
+                                        pathname.startsWith("/account")
+                                            ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                            : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                    }`}
+                                >
+                                    Account
+                                </Link>
+                            )}
                         </>
                     )}
                     {/* Show Users and Workflow management only to librarians and admins */}

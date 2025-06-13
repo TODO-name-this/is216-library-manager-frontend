@@ -127,6 +127,7 @@ export interface Transaction {
     userName?: string
     bookTitle?: string
     bookPhotoUrl?: string
+    bookPrice?: number
     transactionDetail?: TransactionDetail | null
     // Computed fields (calculated on frontend)
     status?: "BORROWED" | "OVERDUE" | "COMPLETED"

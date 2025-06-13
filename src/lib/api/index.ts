@@ -12,6 +12,7 @@ export { transactionDetailAPI } from "./transactionDetailAPI"
 export { authorAPI } from "./authorAPI"
 export { questionAPI } from "./questionAPI"
 export { statisticsAPI } from "./statisticsAPI"
+export { balanceTransactionAPI } from "./balanceTransactionAPI"
 
 // Export types
 export * from "./types"

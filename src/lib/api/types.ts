@@ -389,3 +389,40 @@ export interface ReturnBookResponseDto {
     totalPenaltyFee: number
     message: string
 }
+
+// Balance Transaction Types
+export interface BalanceTransaction {
+    id: string
+    userId?: string // Optional for filtering purposes
+    type: "DEPOSIT" | "WITHDRAWAL" | "BOOK_RENTAL" | "PENALTY_FEE" | "REFUND"
+    amount: number // Positive for deposits/refunds, negative for withdrawals/penalties
+    description: string
+    timestamp: string
+    balanceAfter: number
+    status: "COMPLETED" | "PENDING" | "FAILED"
+    // Enhanced fields for display
+    userName?: string
+    userCCCD?: string
+}
+
+export interface BalanceTransactionRequest {
+    userId: string
+    type: "DEPOSIT" | "WITHDRAWAL"
+    amount: number
+    description?: string
+}
+
+export interface BalanceTransactionResponse {
+    id: string
+    type: "DEPOSIT" | "WITHDRAWAL" | "BOOK_RENTAL" | "PENALTY_FEE" | "REFUND"
+    amount: number
+    description: string
+    timestamp: string
+    balanceAfter: number
+    status: "COMPLETED" | "PENDING" | "FAILED"
+}
+
+// Mock Balance Transaction for development
+export interface MockBalanceTransaction extends BalanceTransaction {
+    // Additional fields for mock data if needed
+}

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { usePageTitle } from "@/lib/usePageTitle"
+import { balanceTransactionAPI } from "@/lib/api"
+import { BalanceTransaction } from "@/lib/api/types"
 import {
     Wallet,
     TrendingUp,
@@ -15,109 +17,70 @@ import {
     RefreshCw,
     Plus,
     Minus,
+    Loader2,
 } from "lucide-react"
 
-interface AccountTransaction {
-    id: string
-    type: "DEPOSIT" | "WITHDRAWAL" | "BOOK_RENTAL" | "PENALTY_FEE" | "REFUND"
-    amount: number
-    description: string
-    timestamp: string
-    balanceAfter: number
-    status: "COMPLETED" | "PENDING" | "FAILED"
-}
-
-// Mock data cho số dư tài khoản
-const mockAccountData = {
-    currentBalance: 2450000, // VND
-    totalDeposited: 5000000,
-    totalSpent: 2550000,
-    pendingTransactions: 0,
-    lastUpdated: "2024-12-10T14:30:00Z",
-}
-
-// Mock data cho lịch sử giao dịch
-const mockTransactionHistory: AccountTransaction[] = [
-    {
-        id: "txn_001",
-        type: "DEPOSIT",
-        amount: 500000,
-        description: "Nạp tiền tại quầy thư viện",
-        timestamp: "2024-12-10T09:15:00Z",
-        balanceAfter: 2450000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_002",
-        type: "BOOK_RENTAL",
-        amount: -75000,
-        description: "Mượn sách: Clean Code",
-        timestamp: "2024-12-09T14:20:00Z",
-        balanceAfter: 1950000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_003",
-        type: "REFUND",
-        amount: 60000,
-        description: "Hoàn tiền trả sách: JavaScript Guide",
-        timestamp: "2024-12-08T11:45:00Z",
-        balanceAfter: 2025000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_004",
-        type: "PENALTY_FEE",
-        amount: -15000,
-        description: "Phí phạt trả sách muộn: Design Patterns",
-        timestamp: "2024-12-07T16:30:00Z",
-        balanceAfter: 1965000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_005",
-        type: "DEPOSIT",
-        amount: 1000000,
-        description: "Nạp tiền tại quầy thư viện",
-        timestamp: "2024-12-05T10:00:00Z",
-        balanceAfter: 1980000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_006",
-        type: "BOOK_RENTAL",
-        amount: -45000,
-        description: "Mượn sách: The Pragmatic Programmer",
-        timestamp: "2024-12-04T13:15:00Z",
-        balanceAfter: 980000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_007",
-        type: "REFUND",
-        amount: 45000,
-        description: "Hoàn tiền trả sách: Introduction to Algorithms",
-        timestamp: "2024-12-03T15:20:00Z",
-        balanceAfter: 1025000,
-        status: "COMPLETED",
-    },
-    {
-        id: "txn_008",
-        type: "DEPOSIT",
-        amount: 2000000,
-        description: "Nạp tiền lần đầu - Tạo tài khoản",
-        timestamp: "2024-12-01T08:30:00Z",
-        balanceAfter: 980000,
-        status: "COMPLETED",
-    },
-]
-
 export default function AccountPage() {
-    usePageTitle("Account - Scam Library");
+    usePageTitle("Account - Scam Library")
     const { user } = useAuth()
-    const [transactions, setTransactions] = useState<AccountTransaction[]>(mockTransactionHistory)
-    const [loading, setLoading] = useState(false)
+    const [transactions, setTransactions] = useState<BalanceTransaction[]>([])
+    const [accountSummary, setAccountSummary] = useState({
+        currentBalance: 0,
+        totalDeposited: 0,
+        totalSpent: 0,
+        pendingTransactions: 0,
+        lastUpdated: new Date().toISOString(),
+    })
+    const [loading, setLoading] = useState(true)
+    const [refreshing, setRefreshing] = useState(false)
     const [filter, setFilter] = useState<string>("ALL")
+    const [error, setError] = useState<string | null>(null)
+
+    const fetchData = async (showLoading = true) => {
+        if (showLoading) setLoading(true)
+        setError(null)
+
+        try {
+            const transactionsResult =
+                await balanceTransactionAPI.getMyBalanceTransactions()
+
+            if (transactionsResult.error) {
+                throw new Error(transactionsResult.error.error)
+            }
+
+            const txns = transactionsResult.data || []
+            setTransactions(txns)
+
+            // Calculate account summary from transactions
+            const summary = {
+                currentBalance: user?.balance || 0, // Use user balance from auth context
+                totalDeposited: txns
+                    .filter((t) => t.type === "DEPOSIT")
+                    .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+                totalSpent: txns
+                    .filter(
+                        (t) =>
+                            t.type === "BOOK_RENTAL" ||
+                            t.type === "PENALTY_FEE" ||
+                            t.type === "WITHDRAWAL"
+                    )
+                    .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+                pendingTransactions: txns.filter((t) => t.status === "PENDING")
+                    .length,
+                lastUpdated: new Date().toISOString(),
+            }
+            setAccountSummary(summary)
+        } catch (error: any) {
+            setError(error.message || "Failed to fetch account data")
+            console.error("Error fetching account data:", error)
+        } finally {
+            if (showLoading) setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchData()
+    }, [])
 
     const formatCurrency = (amount: number): string => {
         return new Intl.NumberFormat("vi-VN", {
@@ -153,7 +116,14 @@ export default function AccountPage() {
         }
     }
 
-    const getTransactionColor = (amount: number) => {
+    const getTransactionColor = (type: string, amount: number) => {
+        if (type === "DEPOSIT" || type === "REFUND") return "text-green-500"
+        if (
+            type === "WITHDRAWAL" ||
+            type === "BOOK_RENTAL" ||
+            type === "PENALTY_FEE"
+        )
+            return "text-red-500"
         return amount > 0 ? "text-green-500" : "text-red-500"
     }
 
@@ -162,12 +132,10 @@ export default function AccountPage() {
         return txn.type === filter
     })
 
-    const handleRefresh = () => {
-        setLoading(true)
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false)
-        }, 1000)
+    const handleRefresh = async () => {
+        setRefreshing(true)
+        await fetchData(false)
+        setRefreshing(false)
     }
 
     const exportTransactions = () => {
@@ -176,11 +144,54 @@ export default function AccountPage() {
         const url = URL.createObjectURL(dataBlob)
         const link = document.createElement("a")
         link.href = url
-        link.download = `account-history-${new Date().toISOString().split("T")[0]}.json`
+        link.download = `account-history-${
+            new Date().toISOString().split("T")[0]
+        }.json`
         link.click()
         URL.revokeObjectURL(url)
     }
 
+    if (loading) {
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gray-900 text-white p-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="flex justify-center items-center h-64">
+                            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                            <span className="ml-2 text-gray-400">
+                                Đang tải dữ liệu tài khoản...
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </ProtectedRoute>
+        )
+    }
+
+    if (error) {
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gray-900 text-white p-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded mb-6">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="h-5 w-5" />
+                                <p>
+                                    <strong>Lỗi:</strong> {error}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => fetchData()}
+                                className="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </ProtectedRoute>
+        )
+    }
     return (
         <ProtectedRoute>
             <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -200,10 +211,14 @@ export default function AccountPage() {
                         <div className="flex gap-4">
                             <button
                                 onClick={handleRefresh}
-                                disabled={loading}
+                                disabled={refreshing}
                                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                             >
-                                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                                <RefreshCw
+                                    className={`h-4 w-4 ${
+                                        refreshing ? "animate-spin" : ""
+                                    }`}
+                                />
                                 Làm mới
                             </button>
 
@@ -222,9 +237,13 @@ export default function AccountPage() {
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-400">Số dư hiện tại</p>
+                                    <p className="text-sm text-gray-400">
+                                        Số dư hiện tại
+                                    </p>
                                     <p className="text-2xl font-bold text-green-400">
-                                        {formatCurrency(mockAccountData.currentBalance)}
+                                        {formatCurrency(
+                                            accountSummary.totalDeposited - accountSummary.totalSpent
+                                        )}
                                     </p>
                                 </div>
                                 <Wallet className="h-8 w-8 text-green-500" />
@@ -234,9 +253,13 @@ export default function AccountPage() {
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-400">Tổng nạp</p>
+                                    <p className="text-sm text-gray-400">
+                                        Tổng nạp
+                                    </p>
                                     <p className="text-2xl font-bold text-blue-400">
-                                        {formatCurrency(mockAccountData.totalDeposited)}
+                                        {formatCurrency(
+                                            accountSummary.totalDeposited
+                                        )}
                                     </p>
                                 </div>
                                 <TrendingUp className="h-8 w-8 text-blue-500" />
@@ -246,9 +269,13 @@ export default function AccountPage() {
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-400">Tổng chi tiêu</p>
+                                    <p className="text-sm text-gray-400">
+                                        Tổng chi tiêu
+                                    </p>
                                     <p className="text-2xl font-bold text-red-400">
-                                        {formatCurrency(mockAccountData.totalSpent)}
+                                        {formatCurrency(
+                                            accountSummary.totalSpent
+                                        )}
                                     </p>
                                 </div>
                                 <TrendingDown className="h-8 w-8 text-red-500" />
@@ -258,9 +285,11 @@ export default function AccountPage() {
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-400">Giao dịch chờ</p>
+                                    <p className="text-sm text-gray-400">
+                                        Giao dịch chờ
+                                    </p>
                                     <p className="text-2xl font-bold text-yellow-400">
-                                        {mockAccountData.pendingTransactions}
+                                        {accountSummary.pendingTransactions}
                                     </p>
                                 </div>
                                 <Clock className="h-8 w-8 text-yellow-500" />
@@ -273,8 +302,9 @@ export default function AccountPage() {
                         <div className="flex items-center gap-2">
                             <AlertCircle className="h-5 w-5" />
                             <p>
-                                <strong>Lưu ý:</strong> Để nạp hoặc rút tiền, vui lòng đến quầy thư viện 
-                                với CCCD và yêu cầu hỗ trợ từ thủ thư.
+                                <strong>Lưu ý:</strong> Để nạp hoặc rút tiền,
+                                vui lòng đến quầy thư viện với CCCD và yêu cầu
+                                hỗ trợ từ thủ thư.
                             </p>
                         </div>
                     </div>
@@ -283,19 +313,27 @@ export default function AccountPage() {
                     <div className="bg-gray-800 rounded-lg border border-gray-700">
                         <div className="p-6 border-b border-gray-700">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-xl font-semibold text-white">Lịch sử giao dịch</h2>
-                                
+                                <h2 className="text-xl font-semibold text-white">
+                                    Lịch sử giao dịch
+                                </h2>
+
                                 <select
                                     value={filter}
                                     onChange={(e) => setFilter(e.target.value)}
                                     className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <option value="ALL">Tất cả giao dịch</option>
+                                    <option value="ALL">
+                                        Tất cả giao dịch
+                                    </option>
                                     <option value="DEPOSIT">Nạp tiền</option>
                                     <option value="WITHDRAWAL">Rút tiền</option>
-                                    <option value="BOOK_RENTAL">Mượn sách</option>
+                                    <option value="BOOK_RENTAL">
+                                        Mượn sách
+                                    </option>
                                     <option value="REFUND">Hoàn tiền</option>
-                                    <option value="PENALTY_FEE">Phí phạt</option>
+                                    <option value="PENALTY_FEE">
+                                        Phí phạt
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -314,24 +352,66 @@ export default function AccountPage() {
                                             className="flex items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                                         >
                                             <div className="flex items-center gap-4">
-                                                {getTransactionIcon(transaction.type)}
+                                                {getTransactionIcon(
+                                                    transaction.type
+                                                )}
                                                 <div>
                                                     <p className="font-medium text-white">
-                                                        {transaction.description}
+                                                        {
+                                                            transaction.description
+                                                        }
                                                     </p>
                                                     <p className="text-sm text-gray-400">
-                                                        {formatDate(transaction.timestamp)}
+                                                        {formatDate(
+                                                            transaction.timestamp
+                                                        )}
                                                     </p>
+                                                    <span
+                                                        className={`inline-block px-2 py-1 text-xs rounded-full ${
+                                                            transaction.status ===
+                                                            "COMPLETED"
+                                                                ? "bg-green-500/20 text-green-400"
+                                                                : transaction.status ===
+                                                                  "PENDING"
+                                                                ? "bg-yellow-500/20 text-yellow-400"
+                                                                : "bg-red-500/20 text-red-400"
+                                                        }`}
+                                                    >
+                                                        {transaction.status ===
+                                                        "COMPLETED"
+                                                            ? "Hoàn thành"
+                                                            : transaction.status ===
+                                                              "PENDING"
+                                                            ? "Đang xử lý"
+                                                            : "Thất bại"}
+                                                    </span>
                                                 </div>
                                             </div>
 
                                             <div className="text-right">
-                                                <p className={`font-bold ${getTransactionColor(transaction.amount)}`}>
-                                                    {transaction.amount > 0 ? "+" : ""}
-                                                    {formatCurrency(Math.abs(transaction.amount))}
+                                                <p
+                                                    className={`font-bold ${getTransactionColor(
+                                                        transaction.type,
+                                                        transaction.amount
+                                                    )}`}
+                                                >
+                                                    {transaction.type ===
+                                                        "DEPOSIT" ||
+                                                    transaction.type ===
+                                                        "REFUND"
+                                                        ? "+"
+                                                        : "-"}
+                                                    {formatCurrency(
+                                                        Math.abs(
+                                                            transaction.amount
+                                                        )
+                                                    )}
                                                 </p>
                                                 <p className="text-sm text-gray-400">
-                                                    Số dư: {formatCurrency(transaction.balanceAfter)}
+                                                    Số dư:{" "}
+                                                    {formatCurrency(
+                                                        transaction.balanceAfter
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
@@ -343,9 +423,13 @@ export default function AccountPage() {
 
                     {/* Footer Info */}
                     <div className="mt-8 text-center text-gray-400 text-sm">
-                        <p>Cập nhật lần cuối: {formatDate(mockAccountData.lastUpdated)}</p>
+                        <p>
+                            Cập nhật lần cuối:{" "}
+                            {formatDate(accountSummary.lastUpdated)}
+                        </p>
                         <p className="mt-1">
-                            Mọi thắc mắc về giao dịch, vui lòng liên hệ thủ thư hoặc quản trị viên
+                            Mọi thắc mắc về giao dịch, vui lòng liên hệ thủ thư
+                            hoặc quản trị viên
                         </p>
                     </div>
                 </div>

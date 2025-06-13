@@ -6,10 +6,12 @@ import {
     BookCopy,
     Transaction,
     CreateTransactionFromReservationRequest,
+    User as UserType,
 } from "@/lib/api/types"
 import { reservationAPI } from "@/lib/api/reservationAPI"
 import { bookCopyAPI } from "@/lib/api/bookCopyAPI"
 import { transactionAPI } from "@/lib/api/transactionAPI"
+import { getUserById } from "@/app/actions/userActions"
 import { useAuth } from "@/lib/AuthContext"
 import {
     BookOpen,
@@ -24,11 +26,14 @@ import {
     Tag,
     FileText,
     Settings,
+    ExternalLink,
 } from "lucide-react"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { useRouter } from "next/navigation"
 
 function WorkflowAndReservationsPage() {
     const { user } = useAuth()
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState("workflow") // "workflow" or "reservations"
     const [reservations, setReservations] = useState<Reservation[]>([])
     const [allReservations, setAllReservations] = useState<Reservation[]>([])
@@ -44,10 +49,32 @@ function WorkflowAndReservationsPage() {
     >(null)
     const [searchTerm, setSearchTerm] = useState("")
 
+    // Function to enhance reservations with user data
+    const enhanceReservationsWithUserData = async (reservations: Reservation[]): Promise<Reservation[]> => {
+        const enhancedReservations = await Promise.all(
+            reservations.map(async (reservation) => {
+                try {
+                    const userData = await getUserById(reservation.userId)
+                    if (userData) {
+                        return {
+                            ...reservation,
+                            userName: userData.name,
+                            userCCCD: userData.cccd,
+                        }
+                    }
+                    return reservation
+                } catch (error) {
+                    console.error(`Failed to fetch user data for ${reservation.userId}:`, error)
+                    return reservation
+                }
+            })
+        )
+        return enhancedReservations
+    }
+
     useEffect(() => {
         loadReservations()
         loadAvailableBookCopies()
-        loadAllReservations()
     }, [])
 
     const loadReservations = async () => {
@@ -55,8 +82,9 @@ function WorkflowAndReservationsPage() {
             const result = await reservationAPI.getAll()
             if (Array.isArray(result)) {
                 // All returned reservations are active (simplified workflow - no status filtering needed)
-                setReservations(result)
-                setAllReservations(result) // Store all reservations for the reservations tab
+                const enhancedReservations = await enhanceReservationsWithUserData(result)
+                setReservations(enhancedReservations)
+                setAllReservations(enhancedReservations) // Store all reservations for the reservations tab
             } else {
                 console.error("Failed to load reservations:", result.error)
             }
@@ -64,19 +92,6 @@ function WorkflowAndReservationsPage() {
             console.error("Error loading reservations:", error)
         } finally {
             setLoading(false)
-        }
-    }
-
-    const loadAllReservations = async () => {
-        try {
-            const result = await reservationAPI.getAll()
-            if (Array.isArray(result)) {
-                setAllReservations(result)
-            } else {
-                console.error("Failed to load all reservations:", result.error)
-            }
-        } catch (error) {
-            console.error("Error loading all reservations:", error)
         }
     }
 
@@ -175,9 +190,12 @@ function WorkflowAndReservationsPage() {
             reservation.bookTitle
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
-            reservation.userName
+            (reservation.userName && reservation.userName
                 .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
+                .includes(searchTerm.toLowerCase())) ||
+            (reservation.userCCCD && reservation.userCCCD
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())) ||
             reservation.id.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
@@ -192,6 +210,10 @@ function WorkflowAndReservationsPage() {
             style: "currency",
             currency: "VND",
         }).format(amount)
+    }
+
+    const handleViewBookDetails = (bookTitleId: string) => {
+        window.open(`/books/details/${bookTitleId}`, '_blank')
     }
 
     return (
@@ -238,7 +260,7 @@ function WorkflowAndReservationsPage() {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by book title, user name, or reservation ID..."
+                            placeholder="Search by book title, user name, CCCD, or reservation ID..."
                             className="w-full pl-10 p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                     </div>
@@ -260,13 +282,14 @@ function WorkflowAndReservationsPage() {
                                 </h2>
                             </div>
 
-                            <div className="p-6">
-                                {filteredReservations.length === 0 ? (
+                            {filteredReservations.length === 0 ? (
+                                <div className="p-6">
                                     <p className="text-gray-400 text-center py-8">
                                         No active reservations
                                     </p>
+                                </div>
                                 ) : (
-                                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                                    <div className="space-y-4 max-h-[560px] overflow-y-auto p-6">
                                         {filteredReservations.map(
                                             (reservation) => (
                                                 <div
@@ -285,17 +308,34 @@ function WorkflowAndReservationsPage() {
                                                 >
                                                     {" "}
                                                     <div className="flex justify-between items-start mb-3">
-                                                        <div>
-                                                            <h3 className="font-medium">
-                                                                {
-                                                                    reservation.bookTitle
-                                                                }
-                                                            </h3>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h3 className="font-medium">
+                                                                    {reservation.bookTitle}
+                                                                </h3>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        handleViewBookDetails(reservation.bookTitleId)
+                                                                    }}
+                                                                    className="flex items-center justify-center p-1.5 rounded-md bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 hover:text-blue-300 border border-blue-600/30 hover:border-blue-500/50 transition-all duration-200 hover:scale-105"
+                                                                    title="View book details"
+                                                                >
+                                                                    <ExternalLink className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
                                                             <p className="text-gray-400 text-sm">
                                                                 User:{" "}
-                                                                {
-                                                                    reservation.userName
-                                                                }
+                                                                {reservation.userName ? (
+                                                                    <span>
+                                                                        {reservation.userName}
+                                                                        {reservation.userCCCD && (
+                                                                            <span className="text-gray-500"> ({reservation.userCCCD})</span>
+                                                                        )}
+                                                                    </span>
+                                                                ) : (
+                                                                    reservation.userId
+                                                                )}
                                                             </p>
                                                             <p className="text-gray-400 text-sm">
                                                                 ID:{" "}
@@ -382,7 +422,6 @@ function WorkflowAndReservationsPage() {
                                         )}
                                     </div>
                                 )}
-                            </div>
                         </div>
 
                         {/* Workflow Actions */}
@@ -501,9 +540,16 @@ function WorkflowAndReservationsPage() {
                                                                 User:
                                                             </span>
                                                             <span className="ml-2">
-                                                                {
+                                                                {selectedReservation.userName ? (
+                                                                    <span>
+                                                                        {selectedReservation.userName}
+                                                                        {selectedReservation.userCCCD && (
+                                                                            <span className="text-gray-500"> ({selectedReservation.userCCCD})</span>
+                                                                        )}
+                                                                    </span>
+                                                                ) : (
                                                                     selectedReservation.userId
-                                                                }
+                                                                )}
                                                             </span>
                                                         </div>
                                                         <div>
@@ -566,10 +612,17 @@ function WorkflowAndReservationsPage() {
                                                     <span className="text-gray-400">
                                                         Book:
                                                     </span>
-                                                    <span className="ml-2">
-                                                        {
-                                                            selectedReservation.bookTitle
-                                                        }
+                                                    <span className="ml-2 inline-flex items-center gap-2">
+                                                        <span>
+                                                            {selectedReservation.bookTitle}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => handleViewBookDetails(selectedReservation.bookTitleId)}
+                                                            className="flex items-center justify-center p-1 rounded-md bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 hover:text-blue-300 border border-blue-600/30 hover:border-blue-500/50 transition-all duration-200 hover:scale-105"
+                                                            title="View book details"
+                                                        >
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </button>
                                                     </span>
                                                 </div>{" "}
                                                 <div>
@@ -635,7 +688,7 @@ function WorkflowAndReservationsPage() {
                                     No reservations found
                                 </p>
                             ) : (
-                                <div className="space-y-4 max-h-96 overflow-y-auto">
+                                <div className="space-y-4 overflow-y-auto">
                                     {allReservations
                                         .filter(
                                             (reservation) =>
@@ -644,11 +697,16 @@ function WorkflowAndReservationsPage() {
                                                     .includes(
                                                         searchTerm.toLowerCase()
                                                     ) ||
-                                                reservation.userName
+                                                (reservation.userName && reservation.userName
                                                     .toLowerCase()
                                                     .includes(
                                                         searchTerm.toLowerCase()
-                                                    ) ||
+                                                    )) ||
+                                                (reservation.userCCCD && reservation.userCCCD
+                                                    .toLowerCase()
+                                                    .includes(
+                                                        searchTerm.toLowerCase()
+                                                    )) ||
                                                 reservation.id
                                                     .toLowerCase()
                                                     .includes(
@@ -663,11 +721,21 @@ function WorkflowAndReservationsPage() {
                                                 {" "}
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div>
-                                                        <h3 className="font-medium">
-                                                            {
-                                                                reservation.bookTitle
-                                                            }
-                                                        </h3>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h3 className="font-medium">
+                                                                {reservation.bookTitle}
+                                                            </h3>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleViewBookDetails(reservation.bookTitleId)
+                                                                }}
+                                                                className="flex items-center justify-center p-1.5 rounded-md bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 hover:text-blue-300 border border-blue-600/30 hover:border-blue-500/50 transition-all duration-200 hover:scale-105"
+                                                                title="View book details"
+                                                            >
+                                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
                                                         <p className="text-gray-400 text-sm">
                                                             Authors:{" "}
                                                             {reservation.bookAuthors?.join(
@@ -676,7 +744,16 @@ function WorkflowAndReservationsPage() {
                                                         </p>
                                                         <p className="text-gray-400 text-sm">
                                                             User:{" "}
-                                                            {reservation.userId}
+                                                            {reservation.userName ? (
+                                                                <span>
+                                                                    {reservation.userName}
+                                                                    {reservation.userCCCD && (
+                                                                        <span className="text-gray-500"> ({reservation.userCCCD})</span>
+                                                                    )}
+                                                                </span>
+                                                            ) : (
+                                                                reservation.userId
+                                                            )}
                                                         </p>
                                                         <p className="text-gray-400 text-sm">
                                                             ID: {reservation.id}

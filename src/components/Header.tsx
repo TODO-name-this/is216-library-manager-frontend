@@ -18,7 +18,7 @@ export default function Header() {
                     <Link href="/" className="flex items-center space-x-2">
                         <span className="text-2xl">📚</span>
                         <h1 className="text-xl font-bold text-white hover:text-gray-300 transition-colors light-mode:text-gray-800 light-mode:hover:text-gray-600">
-                            Scam Library
+                            TODO
                         </h1>
                     </Link>
                     <Link
@@ -146,6 +146,16 @@ export default function Header() {
                                 }`}
                             >
                                 Statistics
+                            </Link>
+                            <Link
+                                href="/balance-management"
+                                className={`px-3 py-1 rounded-md transition-colors ${
+                                    pathname.startsWith("/balance-management")
+                                        ? "bg-gray-700 text-white font-semibold light-mode:bg-gray-200 light-mode:text-gray-800"
+                                        : "text-gray-300 hover:bg-gray-800 hover:text-white light-mode:text-gray-600 light-mode:hover:bg-gray-100 light-mode:hover:text-gray-900"
+                                }`}
+                            >
+                                Balance
                             </Link>
                         </>
                     )}

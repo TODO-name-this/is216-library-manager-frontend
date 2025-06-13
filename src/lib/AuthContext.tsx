@@ -8,13 +8,7 @@ import React, {
     ReactNode,
 } from "react"
 import { authAPI } from "@/lib/api"
-
-interface User {
-    id: string
-    cccd: string
-    name: string
-    role: "ADMIN" | "LIBRARIAN" | "USER"
-}
+import { User } from "@/lib/api/types"
 
 interface AuthContextType {
     user: User | null
@@ -55,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     cccd: parsedUser.cccd,
                     name: parsedUser.name,
                     role: currentUser.role,
+                    email: parsedUser.email || "",
+                    balance: parsedUser.balance || 0,
                 })
             } else {
                 // Token invalid or expired

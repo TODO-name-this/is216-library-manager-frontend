@@ -12,9 +12,12 @@ import {
   MessageSquare,
   User,
 } from "lucide-react";
-import { BookTitle, Review } from "@/lib/api/types";
+import { BookTitle, Reservation, Review } from "@/lib/api/types";
 import { getBookById, deleteBook } from "@/app/actions/bookActions";
-import { createReservation } from "@/app/actions/reservationActions";
+import {
+  createReservation,
+  getReservationsByUserId,
+} from "@/app/actions/reservationActions";
 import { createReview } from "@/app/actions/reviewActions";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -32,6 +35,21 @@ export default function BookDetailsPage() {
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [reserving, setReserving] = useState(false);
+
+  const [myReservations, setMyReservations] = useState<Reservation[]>([]);
+
+  useEffect(() => {
+    async function fetchReservations() {
+      if (!user?.id) return;
+      const res = await getReservationsByUserId(user.id);
+      setMyReservations(res);
+    }
+    fetchReservations();
+  }, [user?.id]);
+
+  const totalDistinctBooksReserved = new Set(
+    myReservations.map((r) => r.bookTitleId)
+  ).size;
 
   useEffect(() => {
     const fetchBookData = async () => {
@@ -64,13 +82,19 @@ export default function BookDetailsPage() {
     if (!user || !book) return;
 
     // Check if user can make more reservations
-    const currentReservations = book.userReservationsForThisBook || 0;
-    const maxReservations = book.maxUserReservations || 0;
-
-    if (currentReservations >= maxReservations) {
+    const totalUserRes = book?.totalUserActiveReservations || 0;
+    const maxGlobal = book?.maxGlobalUserReservations ?? 5;
+    if (totalUserRes >= maxGlobal) {
       alert(
-        `You have reached the maximum number of reservations (${maxReservations}) for this book.`
+        `You can only have up to ${maxGlobal} active reservations in total.`
       );
+      return;
+    }
+
+    // Check if user can reserve this book
+    const userResForThisBook = book.userReservationsForThisBook || 0;
+    if (userResForThisBook > 0) {
+      alert("You have already reserved this book.");
       return;
     }
 
@@ -151,7 +175,7 @@ export default function BookDetailsPage() {
         bookTitleId: book.id,
         star: newRating,
         comment: newComment.trim(),
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
       };
       const newReview = await createReview(reviewData);
       if (newReview) {
@@ -183,7 +207,7 @@ export default function BookDetailsPage() {
 
     try {
       const success = await deleteBook(book.id);
-      
+
       if (success) {
         alert("Book deleted successfully!");
         router.push("/books"); // Redirect to books list
@@ -307,7 +331,7 @@ export default function BookDetailsPage() {
                       >
                         Edit
                       </Link>
-                      <button 
+                      <button
                         onClick={handleDeleteBook}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium"
                       >
@@ -406,7 +430,7 @@ export default function BookDetailsPage() {
                 <div className="flex justify-between">
                   <span>Your reservations:</span>
                   <span className="text-yellow-400 font-medium">
-                    {book.userReservationsForThisBook || 0} of{" "}
+                    {totalDistinctBooksReserved || 0} of{" "}
                     {book.maxUserReservations || 0} max
                   </span>
                 </div>
@@ -434,12 +458,23 @@ export default function BookDetailsPage() {
               ) : (
                 <button
                   onClick={handleReservation}
-                  disabled={!book?.canBorrow || reserving}
+                  disabled={
+                    reserving ||
+                    !book?.canBorrow ||
+                    (book.userReservationsForThisBook || 0) > 0 ||
+                    (book.totalUserActiveReservations || 0) >=
+                      (book.maxGlobalUserReservations || 5)
+                  }
                   className="w-full py-2 mt-4 rounded-lg font-medium transition bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
                   {reserving
                     ? "Reserving..."
-                    : book?.canBorrow
+                    : (book.userReservationsForThisBook || 0) > 0
+                    ? "Already Reserved"
+                    : (book.totalUserActiveReservations || 0) >=
+                      (book.maxGlobalUserReservations || 5)
+                    ? `Limit of 5 Reached`
+                    : book.canBorrow
                     ? "Reserve Book"
                     : "Join Waitlist"}
                 </button>

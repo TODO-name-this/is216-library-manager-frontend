@@ -33,7 +33,8 @@ export default function ReturnManagement() {
     // UI states
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [successMessage, setSuccessMessage] = useState("") // Return processing state
+    const [successMessage, setSuccessMessage] = useState("")
+    // Return processing state
     const [showAssessmentModal, setShowAssessmentModal] = useState(false)
     const [selectedBookCopy, setSelectedBookCopy] = useState<string>("")
     const [bookCondition, setBookCondition] = useState<
@@ -41,6 +42,7 @@ export default function ReturnManagement() {
     >("GOOD")
     const [additionalPenaltyFee, setAdditionalPenaltyFee] = useState(0)
     const [damageDescription, setDamageDescription] = useState("")
+    const [isBookLost, setIsBookLost] = useState(false)
 
     useEffect(() => {
         loadPendingReturns()
@@ -127,10 +129,8 @@ export default function ReturnManagement() {
     }
 
     const openAssessmentModal = (bookCopyId: string) => {
+        resetAssessmentForm()
         setSelectedBookCopy(bookCopyId)
-        setBookCondition("GOOD")
-        setAdditionalPenaltyFee(0)
-        setDamageDescription("")
         setShowAssessmentModal(true)
     }
 
@@ -143,15 +143,27 @@ export default function ReturnManagement() {
         try {
             const returnData: ReturnBookDto = {
                 returnedDate: new Date().toISOString().split("T")[0], // Today's date
-                bookCondition,
-                description: damageDescription || undefined,
-                additionalPenaltyFee:
-                    additionalPenaltyFee > 0 ? additionalPenaltyFee : 0,
+                bookCondition: bookCondition, // Keep the selected condition as-is
+                description: isBookLost
+                    ? `Book lost - replacement fee: ${formatCurrency(
+                          selectedTransaction.bookPrice || 0
+                      )}${
+                          damageDescription
+                              ? `. Additional notes: ${damageDescription}`
+                              : ""
+                      }`
+                    : damageDescription || undefined,
+                additionalPenaltyFee: isBookLost
+                    ? 0 // Server handles book price deduction automatically when isLost=true
+                    : additionalPenaltyFee > 0
+                    ? additionalPenaltyFee
+                    : 0,
             }
 
             const response = await transactionAPI.returnBookWithCondition(
                 selectedTransaction.id,
-                returnData
+                returnData,
+                isBookLost
             )
 
             if (response.data) {
@@ -161,6 +173,7 @@ export default function ReturnManagement() {
                     }`
                 )
                 setShowAssessmentModal(false)
+                resetAssessmentForm()
 
                 // Refresh the pending returns list
                 await loadPendingReturns()
@@ -209,6 +222,46 @@ export default function ReturnManagement() {
 
     const isOverdue = (dueDate: string) => {
         return new Date(dueDate) < new Date()
+    }
+
+    const calculateLateFee = (dueDate: string, bookPrice: number = 0) => {
+        if (!isOverdue(dueDate)) return 0
+        const today = new Date()
+        const due = new Date(dueDate)
+        const diffTime = Math.abs(today.getTime() - due.getTime())
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        const uncappedLateFee = diffDays * 5000 // 5,000 VND per day        // Cap the late fee at the book price
+        return Math.min(uncappedLateFee, bookPrice)
+    }
+
+    const getTotalBill = () => {
+        if (!selectedTransaction) return 0
+        const bookPrice = selectedTransaction.bookPrice || 0
+
+        if (isBookLost) {
+            // If book is lost, penalty fee is the book price + late fee
+            const lateFee = calculateLateFee(
+                selectedTransaction.dueDate || "",
+                bookPrice
+            )
+            return lateFee + bookPrice
+        } else {
+            // Normal return with condition assessment
+            const lateFee = calculateLateFee(
+                selectedTransaction.dueDate || "",
+                bookPrice
+            )
+            const penaltyFee = additionalPenaltyFee
+            return lateFee + penaltyFee
+        }
+    }
+
+    const resetAssessmentForm = () => {
+        setBookCondition("GOOD")
+        setAdditionalPenaltyFee(0)
+        setDamageDescription("")
+        setIsBookLost(false)
+        setSelectedBookCopy("")
     }
 
     return (
@@ -524,150 +577,314 @@ export default function ReturnManagement() {
                 </div>{" "}
                 {/* Assessment Modal */}
                 {showAssessmentModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-                            <h3 className="text-xl font-semibold text-gray-100 mb-4">
-                                Book Return Assessment
-                            </h3>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-gray-800 rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
+                            <div className="p-6 border-b border-gray-700">
+                                <h3 className="text-xl font-semibold text-gray-100">
+                                    Book Return Assessment
+                                </h3>
+                            </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-2">
-                                        Book Copy ID
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={selectedBookCopy}
-                                        readOnly
-                                        className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-2">
-                                        Book Condition
-                                    </label>
-                                    <select
-                                        value={bookCondition}
-                                        onChange={(e) => {
-                                            const value = e.target.value as
-                                                | "NEW"
-                                                | "GOOD"
-                                                | "WORN"
-                                                | "DAMAGED"
-                                            setBookCondition(value)
-                                            // Auto-set penalty for damaged condition
-                                            if (value === "DAMAGED") {
-                                                setAdditionalPenaltyFee(50000) // 50,000 VND for damage
-                                            } else {
-                                                setAdditionalPenaltyFee(0)
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <div className="space-y-4">
+                                    {" "}
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-2">
+                                            Book Copy ID
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={selectedBookCopy}
+                                            readOnly
+                                            className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600"
+                                        />
+                                    </div>
+                                    {/* Book Lost Checkbox */}
+                                    <div className="border border-red-500 rounded-lg p-4 bg-red-500/10">
+                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={isBookLost}
+                                                onChange={(e) => {
+                                                    setIsBookLost(
+                                                        e.target.checked
+                                                    )
+                                                    if (e.target.checked) {
+                                                        // Reset penalty fields when book is lost
+                                                        setAdditionalPenaltyFee(
+                                                            0
+                                                        )
+                                                        setDamageDescription("")
+                                                    } else {
+                                                        setAdditionalPenaltyFee(
+                                                            0
+                                                        )
+                                                    }
+                                                }}
+                                                className="h-4 w-4 text-red-500 bg-gray-700 border-gray-600 rounded focus:ring-red-500"
+                                            />
+                                            <div>
+                                                <span className="text-red-400 font-medium">
+                                                    Book is Lost
+                                                </span>
+                                                <p className="text-gray-400 text-xs mt-1">
+                                                    Check this if the book copy
+                                                    is completely lost. Penalty
+                                                    will be set to the book
+                                                    price:{" "}
+                                                    {selectedTransaction
+                                                        ? formatCurrency(
+                                                              selectedTransaction.bookPrice ||
+                                                                  0
+                                                          )
+                                                        : "N/A"}
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-2">
+                                            Book Condition
+                                        </label>
+                                        <select
+                                            value={bookCondition}
+                                            onChange={(e) => {
+                                                const value = e.target.value as
+                                                    | "NEW"
+                                                    | "GOOD"
+                                                    | "WORN"
+                                                    | "DAMAGED"
+                                                setBookCondition(value)
+                                            }}
+                                            disabled={isBookLost}
+                                            className={`w-full rounded-lg px-4 py-2 border ${
+                                                isBookLost
+                                                    ? "bg-gray-600 text-gray-400 border-gray-500 cursor-not-allowed"
+                                                    : "bg-gray-700 text-gray-100 border-gray-600"
+                                            }`}
+                                        >
+                                            <option value="NEW">
+                                                New Condition
+                                            </option>
+                                            <option value="GOOD">
+                                                Good Condition
+                                            </option>
+                                            <option value="WORN">
+                                                Worn Condition
+                                            </option>{" "}
+                                            <option value="DAMAGED">
+                                                Damaged
+                                            </option>
+                                        </select>
+                                    </div>{" "}
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-2">
+                                            Additional Penalty (VND)
+                                            {isBookLost && (
+                                                <span className="text-red-400 ml-2">
+                                                    (Disabled - Book replacement
+                                                    cost applied)
+                                                </span>
+                                            )}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={
+                                                isBookLost
+                                                    ? 0
+                                                    : additionalPenaltyFee
                                             }
-                                        }}
-                                        className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600"
-                                    >
-                                        <option value="NEW">
-                                            New Condition
-                                        </option>
-                                        <option value="GOOD">
-                                            Good Condition
-                                        </option>
-                                        <option value="WORN">
-                                            Worn Condition
-                                        </option>
-                                        <option value="DAMAGED">
-                                            Damaged (50,000 VND penalty)
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-2">
-                                        Additional Penalty (VND)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={additionalPenaltyFee}
-                                        onChange={(e) =>
-                                            setAdditionalPenaltyFee(
-                                                Number(e.target.value)
-                                            )
-                                        }
-                                        className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600"
-                                        min="0"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-2">
-                                        Description/Notes
-                                    </label>
-                                    <textarea
-                                        value={damageDescription}
-                                        onChange={(e) =>
-                                            setDamageDescription(e.target.value)
-                                        }
-                                        placeholder="Describe any damage or issues..."
-                                        className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600 h-20 resize-none"
-                                    />
-                                </div>
-
-                                <div className="bg-gray-700 rounded-lg p-3">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">
-                                            Existing Late Fee:
-                                        </span>
-                                        <span className="text-gray-100">
-                                            {formatCurrency(
-                                                selectedTransaction?.penaltyFee ||
-                                                    0
-                                            )}
-                                        </span>
+                                            onChange={(e) =>
+                                                setAdditionalPenaltyFee(
+                                                    Number(e.target.value)
+                                                )
+                                            }
+                                            disabled={isBookLost}
+                                            className={`w-full rounded-lg px-4 py-2 border ${
+                                                isBookLost
+                                                    ? "bg-gray-600 text-gray-400 border-gray-500 cursor-not-allowed"
+                                                    : "bg-gray-700 text-gray-100 border-gray-600"
+                                            }`}
+                                            min="0"
+                                        />
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">
-                                            Additional Penalty:
-                                        </span>
-                                        <span className="text-gray-100">
-                                            {formatCurrency(
-                                                additionalPenaltyFee
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-2">
+                                            Description/Notes
+                                            {isBookLost && (
+                                                <span className="text-red-400 ml-2">
+                                                    (Optional - Additional
+                                                    details about the loss)
+                                                </span>
                                             )}
-                                        </span>
-                                    </div>
-                                    <hr className="border-gray-600 my-2" />
-                                    <div className="flex justify-between font-medium">
-                                        <span className="text-gray-100">
-                                            Total:
-                                        </span>
-                                        <span className="text-gray-100">
-                                            {formatCurrency(
-                                                (selectedTransaction?.penaltyFee ||
-                                                    0) + additionalPenaltyFee
+                                        </label>
+                                        <textarea
+                                            value={damageDescription}
+                                            onChange={(e) =>
+                                                setDamageDescription(
+                                                    e.target.value
+                                                )
+                                            }
+                                            placeholder={
+                                                isBookLost
+                                                    ? "Additional details about how the book was lost (optional)..."
+                                                    : "Describe any damage or issues..."
+                                            }
+                                            className="w-full bg-gray-700 text-gray-100 rounded-lg px-4 py-2 border border-gray-600 h-20 resize-none"
+                                        />
+                                    </div>{" "}
+                                    <div className="bg-gray-700 rounded-lg p-4">
+                                        <h4 className="text-lg font-semibold text-gray-100 mb-3 flex items-center">
+                                            <DollarSign className="w-5 h-5 mr-2" />
+                                            Total Bill
+                                        </h4>{" "}
+                                        <div className="space-y-2">
+                                            {selectedTransaction &&
+                                                selectedTransaction.bookPrice && (
+                                                    <div className="flex justify-between text-xs text-gray-500">
+                                                        <span>
+                                                            Book Price{" "}
+                                                            {isBookLost
+                                                                ? "(Replacement Cost)"
+                                                                : "(Late Fee Cap)"}
+                                                            :
+                                                        </span>
+                                                        <span>
+                                                            {formatCurrency(
+                                                                selectedTransaction.bookPrice
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-400">
+                                                    Late Fee (
+                                                    {selectedTransaction &&
+                                                    isOverdue(
+                                                        selectedTransaction.dueDate ||
+                                                            ""
+                                                    )
+                                                        ? Math.ceil(
+                                                              Math.abs(
+                                                                  new Date().getTime() -
+                                                                      new Date(
+                                                                          selectedTransaction.dueDate ||
+                                                                              ""
+                                                                      ).getTime()
+                                                              ) /
+                                                                  (1000 *
+                                                                      60 *
+                                                                      60 *
+                                                                      24)
+                                                          )
+                                                        : 0}{" "}
+                                                    days × 5,000 VND, capped at
+                                                    book price):
+                                                </span>
+                                                <span className="text-gray-100">
+                                                    {formatCurrency(
+                                                        selectedTransaction
+                                                            ? calculateLateFee(
+                                                                  selectedTransaction.dueDate ||
+                                                                      "",
+                                                                  selectedTransaction.bookPrice ||
+                                                                      0
+                                                              )
+                                                            : 0
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            {isBookLost ? (
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-red-400">
+                                                        Book Replacement Cost:
+                                                    </span>
+                                                    <span className="text-red-400 font-semibold">
+                                                        {formatCurrency(
+                                                            selectedTransaction?.bookPrice ||
+                                                                0
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-400">
+                                                        Damage/Condition
+                                                        Penalty:
+                                                    </span>
+                                                    <span className="text-gray-100">
+                                                        {formatCurrency(
+                                                            additionalPenaltyFee
+                                                        )}
+                                                    </span>
+                                                </div>
                                             )}
-                                        </span>
+
+                                            <hr className="border-gray-600 my-2" />
+                                            <div className="flex justify-between font-bold text-lg">
+                                                <span className="text-gray-100">
+                                                    Total Amount Due:
+                                                </span>
+                                                <span
+                                                    className={
+                                                        isBookLost
+                                                            ? "text-red-400"
+                                                            : "text-yellow-400"
+                                                    }
+                                                >
+                                                    {formatCurrency(
+                                                        getTotalBill()
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            {getTotalBill() > 0 && (
+                                                <div
+                                                    className={`mt-2 text-sm rounded p-2 ${
+                                                        isBookLost
+                                                            ? "text-red-300 bg-red-500/20 border border-red-500"
+                                                            : "text-yellow-300 bg-yellow-500/20 border border-yellow-500"
+                                                    }`}
+                                                >
+                                                    {isBookLost ? "📚" : "⚠️"}{" "}
+                                                    Customer will be charged{" "}
+                                                    {formatCurrency(
+                                                        getTotalBill()
+                                                    )}{" "}
+                                                    {isBookLost
+                                                        ? "for book replacement + late fees"
+                                                        : "for this return"}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex space-x-3 mt-6">
-                                <button
-                                    onClick={() =>
-                                        setShowAssessmentModal(false)
-                                    }
-                                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center"
-                                >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={approveReturn}
-                                    disabled={isLoading}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg disabled:opacity-50 flex items-center justify-center"
-                                >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    {isLoading
-                                        ? "Processing..."
-                                        : "Approve Return"}
-                                </button>
+                            <div className="p-6 border-t border-gray-700">
+                                <div className="flex space-x-3">
+                                    <button
+                                        onClick={() => {
+                                            setShowAssessmentModal(false)
+                                            resetAssessmentForm()
+                                        }}
+                                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center"
+                                    >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={approveReturn}
+                                        disabled={isLoading}
+                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg disabled:opacity-50 flex items-center justify-center"
+                                    >
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        {isLoading
+                                            ? "Processing..."
+                                            : "Approve Return"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

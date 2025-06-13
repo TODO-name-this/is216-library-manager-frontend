@@ -98,6 +98,7 @@ export const userAPI = {
             }
         }
     },
+      
     // Search users by query for general search
     searchUser: async (query: string): Promise<ApiResponse<User[]>> => {
         try {
@@ -124,6 +125,23 @@ export const userAPI = {
                         error.message ||
                         "Failed to fetch current user information",
                 },
+            }
+        }
+    },
+      
+    // Reset user password (ADMIN, LIBRARIAN)
+    resetPassword: async (
+        id: string,
+        newPassword: string
+    ): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.patch(`/user/${id}`, {
+                password: newPassword
+            })
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to reset password" },
             }
         }
     },

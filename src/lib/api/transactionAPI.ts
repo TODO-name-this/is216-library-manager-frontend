@@ -231,18 +231,17 @@ export const transactionAPI = {
                 },
             }
         }
-    },
-
-    // NEW: Return book with new DTO
+    }, // NEW: Return book with new DTO
     returnBookWithCondition: async (
         transactionId: string,
-        returnData: ReturnBookDto
+        returnData: ReturnBookDto,
+        isLost: boolean = false
     ): Promise<ApiResponse<ReturnBookResponseDto>> => {
         try {
-            const response = await fetchWrapper.put(
-                `/transaction/${transactionId}/return`,
-                returnData
-            )
+            const url = `/transaction/${transactionId}/return${
+                isLost ? "?isLost=true" : ""
+            }`
+            const response = await fetchWrapper.put(url, returnData)
             return { data: response }
         } catch (error: any) {
             return {

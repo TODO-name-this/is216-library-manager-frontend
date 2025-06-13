@@ -171,6 +171,12 @@ export default function BookDetailsPage() {
 
   const handleSubmitReview = async () => {
     if (!book) return;
+    
+    // Check if user is logged in
+    if (!user) {
+      alert("Please log in to submit a review.");
+      return;
+    }
 
     setSubmittingReview(true);
     try {
@@ -500,50 +506,69 @@ export default function BookDetailsPage() {
           </h3>
 
           {/* Add review form */}
-          <div className="bg-gray-800 rounded-lg p-6 mb-6">
-            <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Your Rating:
-              </label>
-              <div className="flex items-center space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <button
-                    key={i}
-                    title={`${i + 1} star`}
-                    className="text-2xl text-gray-400 hover:text-yellow-400 transition-colors"
-                    onClick={() => setNewRating(i + 1)}
-                  >
-                    {i < newRating ? "★" : "☆"}
-                  </button>
-                ))}
-                <span className="ml-2 text-sm text-gray-400">
-                  {newRating > 0
-                    ? `${newRating} star${newRating > 1 ? "s" : ""}`
-                    : "No rating"}
-                </span>
+          {user ? (
+            <div className="bg-gray-800 rounded-lg p-6 mb-6">
+              <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Your Rating:
+                </label>
+                <div className="flex items-center space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <button
+                      key={i}
+                      title={`${i + 1} star`}
+                      className="text-2xl text-gray-400 hover:text-yellow-400 transition-colors"
+                      onClick={() => setNewRating(i + 1)}
+                    >
+                      {i < newRating ? "★" : "☆"}
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm text-gray-400">
+                    {newRating > 0
+                      ? `${newRating} star${newRating > 1 ? "s" : ""}`
+                      : "No rating"}
+                  </span>
+                </div>
+              </div>
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={4}
+                placeholder="Share your thoughts about this book..."
+              />
+              <div className="flex justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={handleSubmitReview}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  disabled={
+                    !newComment.trim() || newRating === 0 || submittingReview
+                  }
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
               </div>
             </div>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              rows={4}
-              placeholder="Share your thoughts about this book..."
-            />
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                onClick={handleSubmitReview}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                disabled={
-                  !newComment.trim() || newRating === 0 || submittingReview
-                }
-              >
-                {submittingReview ? "Submitting..." : "Submit Review"}
-              </button>
+          ) : (
+            <div className="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-600">
+              <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
+              <div className="text-center py-8">
+                <User className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-400 mb-4">
+                  Please log in to write a review for this book.
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  Log In to Review
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Existing reviews */}
           <div className="space-y-4">

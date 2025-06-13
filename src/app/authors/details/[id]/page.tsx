@@ -70,6 +70,8 @@ export default function AuthorDetailPage() {
                             maxOnlineReservations: 0, // Required property
                             userReservationsForThisBook: null, // Required property
                             maxUserReservations: null, // Required property
+                            totalUserActiveReservations: 0, // Required property
+                            maxGlobalUserReservations: 5, // Required property
                         })
                     )
                     setBooks(authorBooks)

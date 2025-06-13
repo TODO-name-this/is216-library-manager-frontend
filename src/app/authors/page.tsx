@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { Author } from "@/types"
 import { getAllAuthors } from "@/app/actions/authorActions"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 export default function AuthorListPage() {
+    usePageTitle("Authors - Scam Library");
     const [authors, setAuthors] = useState<Author[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")

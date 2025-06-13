@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { transactionAPI } from "@/lib/api/transactionAPI"
 import { userAPI } from "@/lib/api/userAPI"
 import { bookCopyAPI } from "@/lib/api/bookCopyAPI"
-import { User, BookCopy, CreateTransactionDto } from "@/lib/api/types"
+import { User, BookCopy, CreateTransactionRequest } from "@/lib/api/types"
 import {
     Search,
     BookOpen,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react"
 
 export default function BorrowBookPage() {
+    usePageTitle("Borrow Book - Scam Library");
     const router = useRouter()
 
     // Form states
@@ -165,7 +167,7 @@ export default function BorrowBookPage() {
         setSuccessMessage("")
 
         try {
-            const borrowData: CreateTransactionDto = {
+            const borrowData: CreateTransactionRequest = {
                 userId,
                 bookCopyId,
                 dueDate,

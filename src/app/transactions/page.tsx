@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
+import { usePageTitle } from "@/lib/usePageTitle"
 import {
     getAllTransactions,
     getMyTransactions,
@@ -17,6 +18,7 @@ interface TransactionWithUser {
 }
 
 function TransactionsPageContent() {
+    usePageTitle("Transactions - Scam Library")
     const { user, isAdmin, isLibrarian } = useAuth()
     const [transactions, setTransactions] = useState<TransactionWithUser[]>([])
     const [loading, setLoading] = useState(true)

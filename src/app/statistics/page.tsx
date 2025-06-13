@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { getStatistics } from "@/app/actions/statisticsActions"
 import { StatisticsData } from "@/lib/api/statisticsAPI"
 import {
@@ -30,6 +31,7 @@ import autoTable from "jspdf-autotable"
 import * as XLSX from "xlsx"
 
 function StatisticsDashboard() {
+    usePageTitle("Statistics - Scam Library");
     const { user } = useAuth()
     const [stats, setStats] = useState<StatisticsData | null>(null)
     const [loading, setLoading] = useState(true)

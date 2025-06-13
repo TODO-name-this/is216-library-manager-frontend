@@ -5,8 +5,10 @@ import Link from "next/link"
 import { BookTitle } from "@/lib/api/types"
 import { getAllBooks } from "@/app/actions/bookActions"
 import { useAuth } from "@/lib/AuthContext"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 export default function BooksPage() {
+    usePageTitle("Books - Scam Library")
     const { user, isAdmin, isLibrarian } = useAuth()
 
     // State for books data

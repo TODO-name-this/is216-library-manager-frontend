@@ -334,10 +334,9 @@ export interface UpdateBookCopyRequest {
 }
 
 export interface CreateTransactionRequest {
+    dueDate: string // ISO date string (LocalDate on backend)
     userId: string
     bookCopyId: string
-    bookCopyIds: any[]
-    note: string
 }
 
 export interface CreateTransactionFromReservationRequest {
@@ -377,12 +376,6 @@ export interface CreateReturnRequest {
 }
 
 // New DTOs for borrow and return operations
-export interface CreateTransactionDto {
-    dueDate: string // ISO date string
-    userId: string
-    bookCopyId: string
-}
-
 export interface ReturnBookDto {
     returnedDate: string // ISO date string
     bookCondition: "NEW" | "GOOD" | "WORN" | "DAMAGED"

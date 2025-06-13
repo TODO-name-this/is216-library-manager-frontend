@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 export default function LoginPage() {
+    usePageTitle("Login - Scam Library");
     const [cccd, setCccd] = useState("")
     const [password, setPassword] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)

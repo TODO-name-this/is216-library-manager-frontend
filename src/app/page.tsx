@@ -2,8 +2,11 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 export default function HomePage() {
+  usePageTitle("Home - Scam Library");
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-8">
       <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl gap-8 mb-8">

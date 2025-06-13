@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { BookTitle, Author } from "@/lib/api/types"
 import { getAuthorByIdApi } from "@/app/actions/authorActions"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 interface AuthorWithBooks extends Author {
     bookIds?: string[]
@@ -17,6 +18,10 @@ interface AuthorWithBooks extends Author {
 export default function AuthorDetailPage() {
     const { id } = useParams<{ id: string }>()
     const [author, setAuthor] = useState<AuthorWithBooks | null>(null)
+
+    // Set dynamic page title
+    usePageTitle(author ? `${author.name} - Scam Library` : "Author Details - Scam Library")
+
     const [books, setBooks] = useState<BookTitle[]>([])
     const [publisherNames, setPublisherNames] = useState<string[]>([]) // Store publisher names separately
     const [loading, setLoading] = useState(true)
@@ -70,6 +75,8 @@ export default function AuthorDetailPage() {
                             maxOnlineReservations: 0, // Required property
                             userReservationsForThisBook: null, // Required property
                             maxUserReservations: null, // Required property
+                            totalUserActiveReservations: 0, // Required property
+                            maxGlobalUserReservations: 5, // Required property
                         })
                     )
                     setBooks(authorBooks)

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { usePageTitle } from "@/lib/usePageTitle";
 import {
   Star,
   StarHalf,
@@ -27,6 +28,9 @@ export default function BookDetailsPage() {
   const { user, isAdmin, isLibrarian } = useAuth();
 
   const [book, setBook] = useState<BookTitle | null>(null);
+  
+  // Set dynamic page title
+  usePageTitle(book ? `${book.title} - Scam Library` : "Book Details - Scam Library");
   const [reviews, setReviews] = useState<Review[]>([]);
   // state for submitting review
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -59,8 +63,7 @@ export default function BookDetailsPage() {
         const bookData = await getBookById(id);
         if (!bookData) {
           throw new Error("Book not found");
-        }
-        setBook(bookData);
+        }        setBook(bookData);
 
         // Reviews are now included in the book response
         setReviews(bookData.reviews || []);

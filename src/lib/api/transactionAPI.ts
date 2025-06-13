@@ -9,7 +9,6 @@ import {
     TransactionDetail,
     CreateTransactionDetailRequest,
     CreateReturnRequest,
-    CreateTransactionDto,
     ReturnBookDto,
     ReturnBookResponseDto,
 } from "./types"
@@ -220,7 +219,7 @@ export const transactionAPI = {
 
     // NEW: Borrow book (create transaction with new DTO)
     borrowBook: async (
-        borrowData: CreateTransactionDto
+        borrowData: CreateTransactionRequest
     ): Promise<ApiResponse<Transaction>> => {
         try {
             const response = await fetchWrapper.post("/transaction", borrowData)

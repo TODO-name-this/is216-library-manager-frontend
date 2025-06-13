@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { usePageTitle } from "@/lib/usePageTitle"
 import {
     ArrowLeft,
     Book,
@@ -27,6 +28,7 @@ import { Author as LocalAuthor } from "@/types"
 import ProtectedRoute from "@/components/ProtectedRoute"
 
 function AddBookPage() {
+    usePageTitle("Add Book - Scam Library");
     const router = useRouter()
     const [authors, setAuthors] = useState<LocalAuthor[]>([])
     const [publishers, setPublishers] = useState<Publisher[]>([])

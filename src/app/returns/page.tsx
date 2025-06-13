@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { transactionAPI } from "@/lib/api/transactionAPI"
 import { Transaction, TransactionDetail, ReturnBookDto } from "@/lib/api/types"
 import ProtectedRoute from "@/components/ProtectedRoute"
@@ -20,6 +21,7 @@ import {
 } from "lucide-react"
 
 export default function ReturnManagement() {
+    usePageTitle("Return Management - Scam Library");
     // Search states
     const [searchInput, setSearchInput] = useState("")
     const [searchResults, setSearchResults] = useState<Transaction[]>([])

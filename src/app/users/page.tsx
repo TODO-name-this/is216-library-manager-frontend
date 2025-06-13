@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Reservation, Transaction, BookCopy } from "@/lib/api/types";
 import { userAPI } from "@/lib/api/userAPI";
+import { usePageTitle } from "@/lib/usePageTitle";
 import {
   getAllTransactions,
   createTransaction,
@@ -31,6 +32,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/AuthContext";
 
 function UserManagementPage() {
+  usePageTitle("User Management - Scam Library");
   const { user: currentUser, isAdmin, isLibrarian } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -290,39 +292,6 @@ function UserManagementPage() {
       setAvailableBookCopies([]);
     } finally {
       setLoadingBookCopies(false);
-    }
-  };
-
-  const handleCreateTransaction = async () => {
-    if (!selectedUser || !borrowForm.bookCopyId) {
-      setError("Please select a book copy");
-      return;
-    }
-
-    setProcessingTransaction(true);
-    setError(null);
-    try {
-      const result = await createTransaction({
-        userId: selectedUser.id,
-        bookCopyId: borrowForm.bookCopyId,
-        bookCopyIds: [],
-        note: "",
-      });
-
-      if (result) {
-        alert("Transaction created successfully!");
-        setShowBorrowDialog(false);
-        setBorrowForm({ bookCopyId: "", dueDate: "" });
-        // Refresh user data
-        await handleSelectUser(selectedUser);
-      } else {
-        setError("Failed to create transaction");
-      }
-    } catch (error) {
-      console.error("Error creating transaction:", error);
-      setError("Failed to create transaction");
-    } finally {
-      setProcessingTransaction(false);
     }
   };
 

@@ -12,6 +12,7 @@ import {
   Building,
   MessageSquare,
   User,
+  Trash2,
 } from "lucide-react";
 import { BookTitle, Reservation, Review } from "@/lib/api/types";
 import { getBookById, deleteBook } from "@/app/actions/bookActions";
@@ -19,7 +20,7 @@ import {
   createReservation,
   getReservationsByUserId,
 } from "@/app/actions/reservationActions";
-import { createReview } from "@/app/actions/reviewActions";
+import { createReview, deleteReview, getMyReviewForBook, updateReview } from "@/app/actions/reviewActions";
 import { useAuth } from "@/lib/AuthContext";
 
 export default function BookDetailsPage() {
@@ -39,6 +40,12 @@ export default function BookDetailsPage() {
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [reserving, setReserving] = useState(false);
+  
+  // State for tracking user's existing review
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [loadingMyReview, setLoadingMyReview] = useState(false);
+  const [editingReview, setEditingReview] = useState(false);
+  const [deletingReview, setDeletingReview] = useState(false);
 
   const [myReservations, setMyReservations] = useState<Reservation[]>([]);
 
@@ -55,6 +62,23 @@ export default function BookDetailsPage() {
     myReservations.map((r) => r.bookTitleId)
   ).size;
 
+  // Function to fetch user's existing review for this book
+  const fetchMyReview = async (bookTitleId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingMyReview(true);
+      const myExistingReview = await getMyReviewForBook(bookTitleId);
+      setMyReview(myExistingReview);
+      
+      // Don't auto-populate the form - user will use Edit button if they want to modify
+    } catch (error) {
+      console.error("Error fetching user's review:", error);
+    } finally {
+      setLoadingMyReview(false);
+    }
+  };
+
   useEffect(() => {
     const fetchBookData = async () => {
       try {
@@ -67,6 +91,11 @@ export default function BookDetailsPage() {
 
         // Reviews are now included in the book response
         setReviews(bookData.reviews || []);
+        
+        // Fetch user's existing review for this book if logged in
+        if (user?.id) {
+          await fetchMyReview(bookData.id);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load book details"
@@ -79,7 +108,7 @@ export default function BookDetailsPage() {
     if (id) {
       fetchBookData();
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   const handleReservation = async () => {
     if (!user || !book) return;
@@ -171,24 +200,55 @@ export default function BookDetailsPage() {
 
   const handleSubmitReview = async () => {
     if (!book) return;
+    
+    // Check if user is logged in
+    if (!user) {
+      alert("Please log in to submit a review.");
+      return;
+    }
 
     setSubmittingReview(true);
     try {
-      const reviewData = {
-        bookTitleId: book.id,
-        star: newRating,
-        comment: newComment.trim(),
-        date: new Date().toISOString(),
-      };
-      const newReview = await createReview(reviewData);
-      if (newReview) {
-        // Add new review on top
-        setReviews([newReview, ...reviews]);
-        // Reset form
-        setNewRating(0);
-        setNewComment("");
+      if (editingReview && myReview) {
+        // Update existing review - only send partial data (star and comment)
+        const reviewData = {
+          star: newRating,
+          comment: newComment.trim(),
+        };
+        const updatedReview = await updateReview(myReview.id, reviewData);
+        if (updatedReview) {
+          // Update the review in the reviews list
+          setReviews(reviews.map(review => 
+            review.id === myReview.id ? updatedReview : review
+          ));
+          setMyReview(updatedReview);
+          setEditingReview(false); // Exit edit mode
+          setNewRating(0);
+          setNewComment("");
+          alert("Review updated successfully!");
+        } else {
+          alert("Failed to update review. Please try again.");
+        }
       } else {
-        alert("Failed to submit review. Please try again.");
+        // Create new review
+        const reviewData = {
+          bookTitleId: book.id,
+          star: newRating,
+          comment: newComment.trim(),
+          date: new Date().toISOString(),
+        };
+        const newReview = await createReview(reviewData);
+        if (newReview) {
+          // Add new review on top and set as user's review
+          setReviews([newReview, ...reviews]);
+          setMyReview(newReview);
+          // Don't set editingReview to true - show the review in the separate section
+          setNewRating(0);
+          setNewComment("");
+          alert("Review submitted successfully!");
+        } else {
+          alert("Failed to submit review. You may have already reviewed this book.");
+        }
       }
     } catch (err) {
       console.error("Error submitting review:", err);
@@ -196,6 +256,45 @@ export default function BookDetailsPage() {
     } finally {
       setSubmittingReview(false);
     }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!myReview) return;
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete your review? This action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    setDeletingReview(true);
+    try {
+      const success = await deleteReview(myReview.id);
+      if (success) {
+        // Remove review from the reviews list
+        setReviews(reviews.filter(review => review.id !== myReview.id));
+        // Reset the form and states
+        setMyReview(null);
+        setEditingReview(false);
+        setNewRating(0);
+        setNewComment("");
+        alert("Review deleted successfully!");
+      } else {
+        alert("Failed to delete review. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      alert("An error occurred while deleting your review.");
+    } finally {
+      setDeletingReview(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReview(false);
+    setNewRating(0);
+    setNewComment("");
+    // Don't reset myReview - keep it so the user's review stays visible
   };
 
   const handleDeleteBook = async () => {
@@ -500,86 +599,173 @@ export default function BookDetailsPage() {
           </h3>
 
           {/* Add review form */}
-          <div className="bg-gray-800 rounded-lg p-6 mb-6">
-            <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Your Rating:
-              </label>
-              <div className="flex items-center space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <button
-                    key={i}
-                    title={`${i + 1} star`}
-                    className="text-2xl text-gray-400 hover:text-yellow-400 transition-colors"
-                    onClick={() => setNewRating(i + 1)}
-                  >
-                    {i < newRating ? "★" : "☆"}
-                  </button>
-                ))}
-                <span className="ml-2 text-sm text-gray-400">
-                  {newRating > 0
-                    ? `${newRating} star${newRating > 1 ? "s" : ""}`
-                    : "No rating"}
-                </span>
-              </div>
-            </div>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              rows={4}
-              placeholder="Share your thoughts about this book..."
-            />
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                onClick={handleSubmitReview}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                disabled={
-                  !newComment.trim() || newRating === 0 || submittingReview
-                }
-              >
-                {submittingReview ? "Submitting..." : "Submit Review"}
-              </button>
-            </div>
-          </div>
-
-          {/* Existing reviews */}
-          <div className="space-y-4">
-            {reviews && reviews.length > 0 ? (
-              reviews.map((review, idx) => (
-                <div key={idx} className="bg-gray-800 rounded-lg p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-gray-300" />
-                      </div>
+          {user ? (
+            <>
+              {/* Show user's existing review first if they have one */}
+              {myReview && !editingReview && (
+                <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-blue-300">Your Review</h4>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setNewRating(myReview.star);
+                          setNewComment(myReview.comment);
+                          setEditingReview(true);
+                        }}
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer border border-blue-500 hover:border-blue-400"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={handleDeleteReview}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer border border-red-500 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
+                        disabled={deletingReview}
+                      >
+                        {deletingReview ? "Deleting..." : "Delete"}
+                      </button>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="font-semibold text-blue-300">
-                          User {review.userId}
-                        </h5>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex">{renderStars(review.star)}</div>
-                          <span className="text-sm text-gray-400">
-                            {new Date().toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="flex">{renderStars(myReview.star)}</div>
+                    <span className="text-sm text-gray-400">
+                      {myReview.date ? new Date(myReview.date).toLocaleDateString() : "Today"}
+                    </span>
+                  </div>
+                  <p className="text-gray-300 leading-relaxed">{myReview.comment}</p>
+                </div>
+              )}
+
+              {/* Review form - only show if user doesn't have a review OR is editing */}
+              {(!myReview || editingReview) && (
+                <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                  <h4 className="text-lg font-semibold mb-4">
+                    {editingReview ? "Edit Your Review" : "Write a Review"}
+                  </h4>
+                  
+                  {loadingMyReview ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                      <p className="mt-2 text-sm text-gray-400">Loading your review...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Your Rating:
+                        </label>
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <button
+                              key={i}
+                              title={`${i + 1} star`}
+                              className="text-2xl text-gray-400 hover:text-yellow-400 transition-colors"
+                              onClick={() => setNewRating(i + 1)}
+                            >
+                              {i < newRating ? "★" : "☆"}
+                            </button>
+                          ))}
+                          <span className="ml-2 text-sm text-gray-400">
+                            {newRating > 0
+                              ? `${newRating} star${newRating > 1 ? "s" : ""}`
+                              : "No rating"}
                           </span>
                         </div>
                       </div>
-                      <p className="text-gray-300 leading-relaxed">
-                        {review.comment}
-                      </p>
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        rows={4}
+                        placeholder="Share your thoughts about this book..."
+                      />
+                      <div className="flex justify-between items-center mt-4">
+                        <div className="flex gap-2">
+                          {editingReview && (
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSubmitReview}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                          disabled={
+                            !newComment.trim() || newRating === 0 || submittingReview
+                          }
+                        >
+                          {submittingReview 
+                            ? (editingReview ? "Updating..." : "Submitting...") 
+                            : (editingReview ? "Update Review" : "Submit Review")
+                          }
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-600">
+              <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
+              <div className="text-center py-8">
+                <User className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-400 mb-4">
+                  Please log in to write a review for this book.
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  Log In to Review
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Other users' reviews */}
+          <div className="space-y-4">
+            {reviews && reviews.length > 0 ? (
+              reviews
+                .filter(review => !user || review.userId !== user.id) // Exclude user's own review
+                .map((review, idx) => (
+                  <div key={idx} className="bg-gray-800 rounded-lg p-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                          <User className="w-6 h-6 text-gray-300" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-blue-300">
+                            {review.userName || `User ${review.userId}`}
+                          </h5>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex">{renderStars(review.star)}</div>
+                            <span className="text-sm text-gray-400">
+                              {review.date ? new Date(review.date).toLocaleDateString() : new Date().toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-gray-300 leading-relaxed">
+                          {review.comment}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))
             ) : (
               <div className="bg-gray-800 rounded-lg p-8 text-center">
                 <MessageSquare className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                 <p className="text-gray-400 text-lg">
-                  No reviews yet. Be the first to review this book!
+                  {myReview ? "No other reviews yet." : "No reviews yet. Be the first to review this book!"}
                 </p>
               </div>
             )}

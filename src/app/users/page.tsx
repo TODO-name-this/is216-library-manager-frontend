@@ -12,7 +12,7 @@ import {
   createTransactionDetail,
 } from "@/app/actions/transactionActions";
 import { getAllReservations } from "@/app/actions/reservationActions";
-import { updateUser, updateUserByRole, deleteUser } from "@/app/actions/userActions";
+import { updateUser, updateUserByRole, deleteUser, resetUserPassword } from "@/app/actions/userActions";
 import { bookCopyAPI } from "@/lib/api/bookCopyAPI";
 import {
   Search,
@@ -27,6 +27,7 @@ import {
   X,
   Trash2,
   Edit,
+  Key,
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/AuthContext";
@@ -525,6 +526,53 @@ function UserManagementPage() {
     setShowEditDialog(true);
   };
 
+  // Reset password handler
+  const handleResetPassword = async (userToReset: User) => {
+    if (!canEditUser(userToReset)) {
+      alert("You don't have permission to reset this user's password.");
+      return;
+    }
+
+    const newPassword = prompt(
+      `Reset password for "${userToReset.name}"?\n\nPlease enter a new password (minimum 8 characters):`
+    );
+
+    if (!newPassword) {
+      return; // User cancelled
+    }
+
+    if (newPassword.length < 8) {
+      alert("Password must be at least 8 characters long.");
+      return;
+    }
+
+    const confirmReset = window.confirm(
+      `Are you sure you want to reset the password for "${userToReset.name}"?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmReset) {
+      return;
+    }
+
+    try {
+      setProcessingTransaction(true);
+      setError(null);
+
+      const result = await resetUserPassword(userToReset.id, newPassword);
+
+      if (result) {
+        alert(`Password for "${userToReset.name}" has been reset successfully.`);
+      } else {
+        alert("Failed to reset password. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      alert("An error occurred while resetting the password. Please try again.");
+    } finally {
+      setProcessingTransaction(false);
+    }
+  };
+
   const handleEditUserSubmit = async () => {
     if (!selectedUser) return;
 
@@ -833,6 +881,16 @@ function UserManagementPage() {
                     >
                       <Edit className="h-4 w-4" />
                       Edit User
+                    </button>
+                  )}
+                  {canEditUser(selectedUser) && (
+                    <button
+                      onClick={() => handleResetPassword(selectedUser)}
+                      disabled={processingTransaction}
+                      className="bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    >
+                      <Key className="h-4 w-4" />
+                      Reset Password
                     </button>
                   )}
                   {canDeleteUser(selectedUser) && (

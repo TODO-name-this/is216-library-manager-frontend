@@ -118,3 +118,20 @@ export async function deleteUser(id: string): Promise<boolean> {
         throw error
     }
 }
+
+export async function resetUserPassword(
+    id: string,
+    newPassword: string
+): Promise<User | null> {
+    try {
+        const response = await userAPI.resetPassword(id, newPassword)
+        if (response.error) {
+            console.error("Failed to reset password:", response.error)
+            return null
+        }
+        return response.data || null
+    } catch (error) {
+        console.error("Error resetting password:", error)
+        throw error
+    }
+}

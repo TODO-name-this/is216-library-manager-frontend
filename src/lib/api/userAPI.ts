@@ -110,4 +110,21 @@ export const userAPI = {
             }
         }
     },
+
+    // Reset user password (ADMIN, LIBRARIAN)
+    resetPassword: async (
+        id: string,
+        newPassword: string
+    ): Promise<ApiResponse<User>> => {
+        try {
+            const response = await fetchWrapper.patch(`/user/${id}`, {
+                password: newPassword
+            })
+            return { data: response }
+        } catch (error: any) {
+            return {
+                error: { error: error.message || "Failed to reset password" },
+            }
+        }
+    },
 }

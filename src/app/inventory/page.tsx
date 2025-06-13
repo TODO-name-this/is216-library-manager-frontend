@@ -659,18 +659,62 @@ function EditCopyModal({
     onClose: () => void
     onSave: () => void
 }) {
+    const { isAdmin, isLibrarian } = useAuth()
     const [formData, setFormData] = useState({
         status: copy.status as "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST",
         condition: copy.condition as "NEW" | "GOOD" | "WORN" | "DAMAGED",
     })
     const [saving, setSaving] = useState(false)
 
+    // Get the display status for the dropdown (shows OVERDUE for overdue books)
+    const getDisplayStatusForForm = () => {
+        return copy.isOverdue ? "OVERDUE" : copy.status
+    }
+
+    // Role-based access control functions
+    const canEditStatus = (): boolean => {
+        if (isAdmin()) {
+            return true // Admins can always edit status
+        }
+        if (isLibrarian()) {
+            return copy.status !== "BORROWED" // Librarians can edit only when not borrowed
+        }
+        return false // Other roles cannot edit status
+    }
+
+    const getStatusEditMessage = (): string | null => {
+        if (isAdmin()) {
+            return null // No restrictions for admins
+        }
+        if (isLibrarian() && copy.status === "BORROWED") {
+            return "As a librarian, you cannot edit the status of borrowed books. Only admins can do this."
+        }
+        if (!isLibrarian()) {
+            return "You don't have permission to edit book status."
+        }
+        return null
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
 
         try {
-            const response = await bookCopyAPI.updateBookCopy(copy.bookCopyId, formData)
+            // Prepare update data based on what can be changed
+            const updateData: Partial<{
+                status: "AVAILABLE" | "BORROWED" | "RESERVED" | "UNAVAILABLE" | "LOST"
+                condition: "NEW" | "GOOD" | "WORN" | "DAMAGED"
+            }> = {}
+            
+            // Always allow condition changes
+            updateData.condition = formData.condition
+            
+            // Only include status if user has permission to edit it
+            if (canEditStatus() && formData.status !== "BORROWED") {
+                updateData.status = formData.status
+            }
+
+            const response = await bookCopyAPI.updateBookCopy(copy.bookCopyId, updateData)
 
             if (response.data) {
                 alert("Book copy updated successfully!")
@@ -710,20 +754,50 @@ function EditCopyModal({
                             Status
                         </label>
                         <select
-                            value={formData.status}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    status: e.target.value as any,
-                                }))
-                            }
-                            className="w-full p-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            value={getDisplayStatusForForm()}
+                            onChange={(e) => {
+                                // Only allow changing if the new value is not BORROWED or OVERDUE
+                                if (e.target.value !== "BORROWED" && e.target.value !== "OVERDUE") {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        status: e.target.value as any,
+                                    }))
+                                }
+                            }}
+                            disabled={!canEditStatus()}
+                            className={`w-full p-3 bg-gray-700 light-mode:bg-gray-50 border border-gray-600 light-mode:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                !canEditStatus() ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                         >
                             <option value="AVAILABLE">Available</option>
-                            <option value="BORROWED">Borrowed</option>
+                            <option value="RESERVED">Reserved</option>
                             <option value="UNAVAILABLE">Unavailable</option>
                             <option value="LOST">Lost</option>
+                            {/* Show current status if it's BORROWED or OVERDUE, but don't allow selecting them */}
+                            {copy.status === "BORROWED" && !copy.isOverdue && (
+                                <option value="BORROWED" disabled>
+                                    Borrowed (Current - Cannot Change)
+                                </option>
+                            )}
+                            {copy.isOverdue && (
+                                <option value="OVERDUE" disabled>
+                                    Overdue (Current - Cannot Change)
+                                </option>
+                            )}
                         </select>
+                        {getStatusEditMessage() && (
+                            <div className="mt-2 p-3 bg-yellow-100 light-mode:bg-yellow-50 border border-yellow-300 light-mode:border-yellow-200 rounded-lg">
+                                <div className="flex items-start gap-2">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                                    <p className="text-sm text-yellow-800 light-mode:text-yellow-700">
+                                        {getStatusEditMessage()}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        <p className="text-xs text-gray-400 light-mode:text-gray-500 mt-1">
+                            Note: Status cannot be set to "Borrowed" manually. Books become borrowed through the borrowing workflow.
+                        </p>
                     </div>
 
                     <div>
@@ -744,7 +818,7 @@ function EditCopyModal({
                             <option value="GOOD">Good</option>
                             <option value="WORN">Worn</option>
                             <option value="DAMAGED">Damaged</option>
-                        </select>{" "}
+                        </select>
                     </div>
 
                     <div className="flex gap-3 mt-6">

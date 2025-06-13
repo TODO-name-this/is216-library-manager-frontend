@@ -100,9 +100,6 @@ export interface Review {
 }
 
 export interface Reservation {
-    userName: any
-    availableCopies: ReactNode
-    totalCopies: ReactNode
     id: string
     userId: string
     bookTitleId: string
@@ -114,6 +111,10 @@ export interface Reservation {
     bookImageUrl: string
     bookAuthors: string[]
     status: "PENDING" | "READY_FOR_PICKUP"
+    userName?: string // Optional user name for display
+    userCCCD?: string // Optional user CCCD for display
+    availableCopies?: number // Optional field for display
+    totalCopies?: number // Optional field for display
 }
 
 export interface Transaction {

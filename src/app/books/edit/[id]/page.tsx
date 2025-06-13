@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
+import { usePageTitle } from "@/lib/usePageTitle"
 import {
     ArrowLeft,
     Book,
@@ -31,6 +32,10 @@ function EditBookPage() {
     const { id } = useParams<{ id: string }>()
 
     const [book, setBook] = useState<BookTitle | null>(null)
+
+    // Set dynamic page title
+    usePageTitle(book ? `Edit ${book.title} - Scam Library` : "Edit Book - Scam Library")
+
     const [authors, setAuthors] = useState<LocalAuthor[]>([])
     const [publishers, setPublishers] = useState<Publisher[]>([])
     const [categories, setCategories] = useState<Category[]>([])

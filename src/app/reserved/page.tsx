@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Reservation, User } from "@/lib/api/types";
+import { usePageTitle } from "@/lib/usePageTitle";
 import {
     deleteReservation,
   getAllReservations,
@@ -18,6 +19,7 @@ interface ReservedBookData {
 }
 
 function ReservedBooks() {
+  usePageTitle("Reserved Books - Scam Library");
   const { user, isAdmin, isLibrarian } = useAuth();
   const [reservedBooks, setReservedBooks] = useState<ReservedBookData[]>([]);
   const [loading, setLoading] = useState(true);

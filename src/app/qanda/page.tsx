@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePageTitle } from "@/lib/usePageTitle"
 import TabNavigation from "@/app/qanda/TabNavigation"
 import QuestionForm from "@/app/qanda/QuestionForm"
 import QuestionCard from "@/app/qanda/QuestionCard"
@@ -12,6 +13,7 @@ import {
 } from "@/app/actions/questionActions"
 
 export default function QandAPage() {
+    usePageTitle("Q&A - Scam Library");
     const [questions, setQuestions] = useState<Question[]>([])
     const [activeTab, setActiveTab] = useState<"ask" | "view">("view")
     const [expandedCard, setExpandedCard] = useState<string | null>(null)

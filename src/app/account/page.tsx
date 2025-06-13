@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { usePageTitle } from "@/lib/usePageTitle"
 import {
     Wallet,
     TrendingUp,
@@ -112,6 +113,7 @@ const mockTransactionHistory: AccountTransaction[] = [
 ]
 
 export default function AccountPage() {
+    usePageTitle("Account - Scam Library");
     const { user } = useAuth()
     const [transactions, setTransactions] = useState<AccountTransaction[]>(mockTransactionHistory)
     const [loading, setLoading] = useState(false)

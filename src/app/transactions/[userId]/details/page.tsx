@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { transactionAPI } from "@/lib/api/transactionAPI"
 import { userAPI } from "@/lib/api/userAPI"
 import { Transaction, User } from "@/lib/api/types"
@@ -25,6 +26,10 @@ export default function TransactionDetailsPage({
     const router = useRouter()
 
     const [user, setUser] = useState<User | null>(null)
+    
+    // Set dynamic page title
+    usePageTitle(user ? `Transactions - ${user.name} - Scam Library` : "Transaction Details - Scam Library");
+    
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)

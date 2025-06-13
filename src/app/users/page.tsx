@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Reservation, Transaction, BookCopy } from "@/lib/api/types";
 import { userAPI } from "@/lib/api/userAPI";
+import { usePageTitle } from "@/lib/usePageTitle";
 import {
   getAllTransactions,
   createTransaction,
@@ -31,6 +32,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/AuthContext";
 
 function UserManagementPage() {
+  usePageTitle("User Management - Scam Library");
   const { user: currentUser, isAdmin, isLibrarian } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);

@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { bookCopyAPI, bookTitleAPI } from "@/lib/api"
 import { BookCopyWithDueInfo, BookTitle } from "@/lib/api/types"
+import { usePageTitle } from "@/lib/usePageTitle"
 import {
     Search,
     Filter,
@@ -35,6 +36,7 @@ export default function InventoryPage() {
 }
 
 function InventoryManagement() {
+    usePageTitle("Inventory - Scam Library");
     const { user } = useAuth()
     const [bookCopies, setBookCopies] = useState<BookCopyWithDueInfo[]>([])
     const [filteredCopies, setFilteredCopies] = useState<BookCopyWithDueInfo[]>([])

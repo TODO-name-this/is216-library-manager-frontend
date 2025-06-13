@@ -5,8 +5,10 @@ import { userAPI } from "@/lib/api/userAPI";
 import { CreateUserRequest } from "@/lib/api/types";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/AuthContext";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 export default function CreateUserPage() {
+  usePageTitle("Create User - Scam Library");
   const { user, isAdmin } = useAuth();
   const [formData, setFormData] = useState<CreateUserRequest>({
     cccd: "",

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { transactionAPI } from "@/lib/api/transactionAPI"
 import { userAPI } from "@/lib/api/userAPI"
 import { bookCopyAPI } from "@/lib/api/bookCopyAPI"
@@ -19,6 +20,7 @@ import {
 } from "lucide-react"
 
 export default function BorrowBookPage() {
+    usePageTitle("Borrow Book - Scam Library");
     const router = useRouter()
 
     // Form states

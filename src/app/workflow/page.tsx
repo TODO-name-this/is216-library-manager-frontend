@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { usePageTitle } from "@/lib/usePageTitle"
 import {
     Reservation,
     BookCopy,
@@ -32,6 +33,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"
 import { useRouter } from "next/navigation"
 
 function WorkflowAndReservationsPage() {
+    usePageTitle("Workflow & Reservations - Scam Library");
     const { user } = useAuth()
     const router = useRouter()
     const [activeTab, setActiveTab] = useState("workflow") // "workflow" or "reservations"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { bookCopyAPI } from "@/lib/api"
 import { BookCopy } from "@/lib/api/types"
 import {
@@ -42,6 +43,7 @@ export default function LabelsPage() {
 }
 
 function LabelManagement() {
+    usePageTitle("Labels - Scam Library");
     const { user } = useAuth()
     const [bookCopies, setBookCopies] = useState<BookCopy[]>([])
     const [filteredCopies, setFilteredCopies] = useState<BookCopy[]>([])

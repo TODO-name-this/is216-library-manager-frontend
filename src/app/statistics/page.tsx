@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { transactionAPI, bookCopyAPI, userAPI, reservationAPI } from "@/lib/api"
 import {
     BarChart3,
@@ -92,6 +93,7 @@ const mockStatistics: StatisticsData = {
 }
 
 function StatisticsDashboard() {
+    usePageTitle("Statistics - Scam Library");
     const { user } = useAuth()
     const [stats, setStats] = useState<StatisticsData>(mockStatistics)
     const [loading, setLoading] = useState(false)
